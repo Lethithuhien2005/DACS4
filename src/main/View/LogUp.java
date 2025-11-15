@@ -13,10 +13,19 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Font;
 
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoCollection;
+import org.bson.Document;
+
+import static mongodb.PasswordUtils.hashPassword;
+
 
 public class LogUp extends Application {
     double fieldWidth = 320;
     double fieldHeight = 50;
+
     @Override
     public void start(Stage stage) {
         // Left part
@@ -49,13 +58,13 @@ public class LogUp extends Application {
                 -fx-border-width: 1.5;
                 """;
         String textFieldFocus = """
-               -fx-text-fill: black;
-               -fx-prompt-text-fill: gray;
-               -fx-background-radius: 20;
-               -fx-border-radius: 20;
-               -fx-border-color: #b333e9; 
-               -fx-border-width: 2;
-               """;
+                -fx-text-fill: black;
+                -fx-prompt-text-fill: gray;
+                -fx-background-radius: 20;
+                -fx-border-radius: 20;
+                -fx-border-color: #b333e9; 
+                -fx-border-width: 2;
+                """;
 
         Label name = new Label("Account name");
         name.setFont(Font.font("Poppins", FontWeight.BOLD, 16));
@@ -70,7 +79,7 @@ public class LogUp extends Application {
         nameTextField.setPrefHeight(fieldHeight);
         // Change style when focusing
         nameTextField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
-            if(t1) {
+            if (t1) {
                 nameTextField.setStyle(textFieldFocus);
             } else {
                 nameTextField.setStyle(textFieldStyle);
@@ -92,7 +101,7 @@ public class LogUp extends Application {
         emailTextField.setPrefHeight(fieldHeight);
         // Change style when focusing
         emailTextField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
-            if(t1) {
+            if (t1) {
                 emailTextField.setStyle(textFieldFocus);
             } else {
                 emailTextField.setStyle(textFieldStyle);
@@ -113,7 +122,7 @@ public class LogUp extends Application {
         passwordField.setPrefHeight(fieldHeight);
         // Change style when focusing
         passwordField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
-            if(t1) {
+            if (t1) {
                 passwordField.setStyle(textFieldFocus);
             } else {
                 passwordField.setStyle(textFieldStyle);
@@ -147,9 +156,46 @@ public class LogUp extends Application {
         signInBtn.setOnMouseExited(e -> {
             signInBtn.setStyle(signInBtnStyle);
         });
+
         signInBtn.setMaxWidth(100);
         signInBtn.setPrefHeight(40);
         VBox.setMargin(signInBtn, new Insets(15, 0, 0, 0));
+
+        // Set Action for Signin Btn
+        signInBtn.setOnAction(e -> {
+            // Lấy giá trị từ form
+            String username = nameTextField.getText() != null ? nameTextField.getText() : "";
+            String emailText = emailTextField.getText() != null ? emailTextField.getText() : "";
+            String passwordText = passwordField.getText() != null ? passwordField.getText() : "";
+
+            // Hash password
+            String hashedPassword = hashPassword(passwordText);
+
+            // Kết nối MongoDB và lưu user
+            try (MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017")) {
+                MongoDatabase db = mongoClient.getDatabase("halomeet");
+                MongoCollection<Document> users = db.getCollection("users");
+
+                Document user = new Document("username", username)
+                        .append("fullname", "")
+                        .append("email", emailText)
+                        .append("password", hashedPassword)
+                        .append("female", "")
+                        .append("dateOfBirth", "");
+
+                users.insertOne(user);
+                System.out.println("User '" + username + "' đã được lưu vào MongoDB!");
+
+
+                LogIn logInPage = new LogIn();
+                Stage loginStage = new Stage();
+                logInPage.start(loginStage);
+                stage.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
 
         // Keep the same size for email, password and button when window change size
         signInBtn.prefWidthProperty().bind(email.widthProperty());
@@ -178,7 +224,7 @@ public class LogUp extends Application {
             try {
                 logInPage.start(stage1);
                 stage.close();
-             } catch (Exception ex) {
+            } catch (Exception ex) {
                 ex.printStackTrace();
             }
         });
@@ -217,8 +263,8 @@ public class LogUp extends Application {
         // When changing the window's size, each part is 50%
         root.widthProperty().addListener((obs, oldVal, newVal) -> {
             double width = newVal.doubleValue();
-            leftPane.setPrefWidth(width*0.45);
-            rightPane.setPrefWidth(width*0.55);
+            leftPane.setPrefWidth(width * 0.45);
+            rightPane.setPrefWidth(width * 0.55);
         });
 
         Scene scene = new Scene(root);
