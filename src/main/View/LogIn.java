@@ -18,7 +18,8 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
-import mongodb.PasswordUtils;
+import main.Controller.UserController;
+import main.Model.PasswordUtils;
 import org.bson.Document;
 
 
@@ -158,34 +159,21 @@ public class LogIn extends Application {
         signInBtn.setPrefHeight(fieldHeight);
 
         signInBtn.setOnAction(e -> {
-            String emailText = email.getText() != null ? email.getText() : "";
-            String passwordText = password.getText() != null ? password.getText() : "";
+            String emailText = email.getText();
+            String passwordText = password.getText();
 
-            // Hash password nếu DB lưu password đã hash
-            String hashedPassword = PasswordUtils.hashPassword(passwordText);
-
-            try (MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017")) {
-                MongoDatabase db = mongoClient.getDatabase("halomeet");
-                MongoCollection<Document> users = db.getCollection("users");
-
-                // Tìm user có email và password khớp
-                Document user = users.find(Filters.and(
-                        Filters.eq("email", emailText),
-                        Filters.eq("password", hashedPassword)
-                )).first();
-
-                if (user != null) {
-                    System.out.println("Login successfully!");
-                    // TODO: Chuyển sang giao diện chính nếu muốn
-                } else {
-                    System.out.println("Email or password is incorrect!");
-                }
-
-            } catch (Exception ex) {
-                ex.printStackTrace();
+            UserController userController = new UserController();
+            String res = userController.login(emailText, passwordText);
+            if (res.equals("SUCCESS")) {
+                System.out.println("Log in successfully!");
+                // Convert to homepage
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setHeaderText(null);
+                alert.setContentText(res);
+                alert.show();
             }
         });
-
 
         // Keep the same size for email, password and button when window change size
         signInBtn.prefWidthProperty().bind(email.widthProperty());

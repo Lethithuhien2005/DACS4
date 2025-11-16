@@ -13,13 +13,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Font;
 
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoCollection;
-import org.bson.Document;
-
-import static mongodb.PasswordUtils.hashPassword;
+import main.Controller.UserController;
 
 
 public class LogUp extends Application {
@@ -163,36 +157,33 @@ public class LogUp extends Application {
 
         // Set Action for Signin Btn
         signInBtn.setOnAction(e -> {
-            // Lấy giá trị từ form
-            String username = nameTextField.getText() != null ? nameTextField.getText() : "";
-            String emailText = emailTextField.getText() != null ? emailTextField.getText() : "";
-            String passwordText = passwordField.getText() != null ? passwordField.getText() : "";
+            // Get value from form
+            String username = nameTextField.getText();
+            String emailText = emailTextField.getText();
+            String passwordText = passwordField.getText();
 
-            // Hash password
-            String hashedPassword = hashPassword(passwordText);
+            UserController logUpController = new UserController();
+            String result = logUpController.register(username, emailText, passwordText);
 
-            // Kết nối MongoDB và lưu user
-            try (MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017")) {
-                MongoDatabase db = mongoClient.getDatabase("halomeet");
-                MongoCollection<Document> users = db.getCollection("users");
-
-                Document user = new Document("username", username)
-                        .append("fullname", "")
-                        .append("email", emailText)
-                        .append("password", hashedPassword)
-                        .append("female", "")
-                        .append("dateOfBirth", "");
-
-                users.insertOne(user);
-                System.out.println("User '" + username + "' đã được lưu vào MongoDB!");
-
+            if (result.equals("SUCCESS")) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setHeaderText(null);
+                alert.setContentText("Sign up successful!");
+                alert.showAndWait();
 
                 LogIn logInPage = new LogIn();
                 Stage loginStage = new Stage();
-                logInPage.start(loginStage);
-                stage.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
+                try {
+                    logInPage.start(loginStage);
+                    stage.close();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setHeaderText(null);
+                alert.setContentText(result);
+                alert.show();
             }
         });
 

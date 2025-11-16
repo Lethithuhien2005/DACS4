@@ -1,4 +1,4 @@
-package mongodb;
+package main.Model;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
