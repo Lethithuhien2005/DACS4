@@ -159,20 +159,30 @@ public class LogIn extends Application {
         signInBtn.setPrefHeight(fieldHeight);
 
         signInBtn.setOnAction(e -> {
-            String emailText = email.getText();
-            String passwordText = password.getText();
 
-            UserController userController = new UserController();
-            String res = userController.login(emailText, passwordText);
-            if (res.equals("SUCCESS")) {
-                System.out.println("Log in successfully!");
-                // Convert to homepage
-            } else {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setHeaderText(null);
-                alert.setContentText(res);
-                alert.show();
-            }
+            ChatPage chatPage = new ChatPage();
+            Stage chatStage = new Stage();
+            chatPage.start(chatStage);
+            stage.close(); // đóng cửa sổ login
+
+//            String emailText = email.getText();
+//            String passwordText = password.getText();
+//
+//            UserController userController = new UserController();
+//            String res = userController.login(emailText, passwordText);
+//            if (res.equals("SUCCESS")) {
+//                System.out.println("Log in successfully!");
+//                // Convert to homepage
+//                ChatPage chatPage = new ChatPage();
+//                Stage chatStage = new Stage();
+//                chatPage.start(chatStage);
+//                stage.close(); // đóng cửa sổ login
+//            } else {
+//                Alert alert = new Alert(Alert.AlertType.ERROR);
+//                alert.setHeaderText(null);
+//                alert.setContentText(res);
+//                alert.show();
+//            }
         });
 
         // Keep the same size for email, password and button when window change size
