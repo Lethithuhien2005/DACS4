@@ -51,7 +51,7 @@ public class LogIn extends Application {
         leftPane.setPadding(new Insets(30, 0, 0, 50));
 
         // Right part
-        Image logo = new Image(getClass().getResource("/images/logo2.jpg").toExternalForm());
+        Image logo = new Image(getClass().getResource("/images/logo2.png").toExternalForm());
         ImageView logo_imageView = new ImageView(logo);
         logo_imageView.setFitWidth(50);
         logo_imageView.setFitHeight(70);
@@ -99,8 +99,8 @@ public class LogIn extends Application {
                -fx-border-width: 2;
                """;
        email.setStyle(textFieldStyle);
-        email.setMaxWidth(fieldWidth);
-        email.setPrefHeight(fieldHeight);
+       email.setMaxWidth(fieldWidth);
+       email.setPrefHeight(fieldHeight);
        // Change style when focusing
         email.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
             if(t1) {

@@ -23,7 +23,7 @@ public class LogUp extends Application {
     @Override
     public void start(Stage stage) {
         // Left part
-        Image logo = new Image(getClass().getResource("/images/logo2.jpg").toExternalForm());
+        Image logo = new Image(getClass().getResource("/images/logo2.png").toExternalForm());
         ImageView logo_imageView = new ImageView(logo);
         logo_imageView.setFitWidth(50);
         logo_imageView.setFitHeight(70);
