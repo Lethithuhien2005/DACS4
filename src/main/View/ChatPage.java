@@ -20,245 +20,11 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 
-public class ChatPage extends Application {
+public class ChatPage extends StackPane {
+    private StackPane contentPane;
 
-    HBox createSearchBar() {
-        // Icon kính lúp
-        ImageView icon = new ImageView(new Image("images/chatPage/search-icon.png"));
-        icon.setFitWidth(16);
-        icon.setFitHeight(16);
-
-        // TextField với placeholder
-        TextField txtSearch = new TextField();
-        txtSearch.setPromptText("Search");
-        txtSearch.setStyle("""
-        -fx-background-color: transparent;
-        -fx-border-width: 0;
-        -fx-font-size: 14px;
-    """);
-
-        // Container cho search bar
-        HBox box = new HBox(10);
-        box.setPadding(new Insets(8, 12, 8, 12));
-        box.setAlignment(Pos.CENTER_LEFT);
-        box.getChildren().addAll(icon, txtSearch);
-
-        // Style: bo góc + màu nền
-        box.setStyle("""
-        -fx-background-color: #ffffff;
-        -fx-background-radius: 30;
-        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 10, 0.5, 0, 2);
-    """);
-
-        // Hover effect
-        box.setOnMouseEntered(e -> {
-            box.setScaleX(0.99);
-            box.setScaleY(0.99);
-            box.setStyle("""
-            -fx-background-color: #E6E6FA;
-            -fx-background-radius: 30;
-            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0.5, 0, 2);
-        """);
-        });
-
-        box.setOnMouseExited(e -> {
-            box.setScaleX(1); // quay về bình thường
-            box.setScaleY(1);
-            box.setStyle("""
-            -fx-background-color: #ffffff;
-            -fx-background-radius: 30;
-            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 10, 0.5, 0, 2);
-        """);
-        });
-
-        // Khi focus vào textfield → highlight
-        txtSearch.focusedProperty().addListener((obs, oldVal, isFocused) -> {
-            if (isFocused) {
-                box.setStyle("""
-                -fx-background-color: #ffffff;
-                -fx-background-radius: 30;
-                -fx-border-radius: 30;
-                -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 10, 0.5, 0, 2);
-            """);
-            } else {
-                box.setStyle("""
-                -fx-background-color: #ffffff;
-                -fx-background-radius: 30;
-                -fx-border-radius: 30;
-                -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 10, 0.5, 0, 2);
-            """);
-            }
-        });
-
-        return box;
-    }
-
-    HBox userGroupItem(String avatarPath, String name, String timeMsg, String textMsg, String isRead) {
-
-        // Avatar hình tròn
-        Image img = new Image(avatarPath);
-        Circle avatar = new Circle(18); // bán kính 25px
-        avatar.setFill(new ImagePattern(img));
-
-        // Name + Time
-        Label lblName = new Label(name);
-        lblName.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
-        Label lblTime = new Label(timeMsg);
-        lblTime.setStyle("-fx-font-size: 8px; -fx-text-fill: #777;");
-        Region spacerNameTime = new Region();                    // khoảng đẩy
-        HBox.setHgrow(spacerNameTime, Priority.ALWAYS);         // cho phép spacer giãn hết mức
-        HBox hBoxNameTime = new HBox();
-        hBoxNameTime.getChildren().addAll(lblName, spacerNameTime, lblTime);
-
-        // TextMsg + Isread
-        Label lblTextMsg = new Label(textMsg);
-        // Nếu unread thì in đậm, còn read thì bình thường
-        if ("unread".equals(isRead)) {
-            lblTextMsg.setStyle("-fx-font-size: 10px; -fx-font-weight: bold;");
-        } else {
-            lblTextMsg.setStyle("-fx-font-size: 10px; -fx-font-weight: normal;");
-        }
-        String iconPath = isRead.equals("read")
-                ? "./images/tick.png"
-                : "./images/unread.png";
-        ImageView iconIsread = new ImageView(new Image(iconPath));
-        iconIsread.setFitWidth(12);
-        iconIsread.setFitHeight(12);
-        Region spacerTxtMsg = new Region();
-        HBox.setHgrow(spacerTxtMsg, Priority.ALWAYS);
-        HBox hBoxTxtMsgIsread = new HBox(lblTextMsg, spacerTxtMsg, iconIsread);
-        hBoxTxtMsgIsread.setAlignment(Pos.CENTER_RIGHT);
-
-        Region spacerVertical = new Region();
-        VBox.setVgrow(spacerVertical, Priority.ALWAYS);
-        VBox.setVgrow(spacerVertical, Priority.ALWAYS); // cho spacer giãn hết mức dọc
-        VBox vBoxMsglog= new VBox(hBoxNameTime,spacerVertical, hBoxTxtMsgIsread);
-
-        vBoxMsglog.setMaxWidth(Double.MAX_VALUE);      // Cho phép VBox giãn
-
-        // Container
-        HBox boxMsgDialog = new HBox(5, avatar, vBoxMsglog); // khoảng cách 5px
-        //boxMsgDialog.setAlignment(Pos.CENTER_LEFT);
-        boxMsgDialog.setMaxWidth(Double.MAX_VALUE);        // cho HBox giãn full
-        HBox.setHgrow(vBoxMsglog, Priority.ALWAYS);
-        //HBox.setHgrow(boxMsgDialog, Priority.ALWAYS);
-
-
-        return boxMsgDialog;
-    }
-
-    private VBox chatVBox; // đưa ra ngoài để các method khác truy cập được
-    private ScrollPane scrollPane;
-
-    // Header Chat: thay vì chỉ là Label
-    private HBox chatHeader; // đưa ra ngoài để listener truy cập
-    private ImageView chatHeaderAvatar;
-    private Label chatHeaderName;
-    private HBox iconMessBox;
-    private HBox iconChatInforBox;
-
-    private String getItemName(HBox item) {
-        if (item == null) return "";
-
-        for (Node node : item.getChildren()) {
-            if (node instanceof VBox) {
-                VBox vbox = (VBox) node;
-                // Lấy HBox đầu tiên trong VBox
-                if (!vbox.getChildren().isEmpty() && vbox.getChildren().get(0) instanceof HBox) {
-                    HBox hBoxNameTime = (HBox) vbox.getChildren().get(0);
-                    for (Node inner : hBoxNameTime.getChildren()) {
-                        if (inner instanceof Label) {
-                            return ((Label) inner).getText();
-                        }
-                    }
-                }
-            }
-        }
-        return "";
-    }
-    private void updateChatHeader(HBox item) {
-        if (item == null) return;
-
-        // Lấy tên
-        String name = getItemName(item);
-        chatHeaderName.setText(name);
-
-        // Lấy avatar: HBox con đầu tiên chứa VBox con avatar?
-        for (Node node : item.getChildren()) {
-            if (node instanceof Circle) {
-                Circle avatarCircle = (Circle) node;
-                ImagePattern pattern = (ImagePattern) avatarCircle.getFill();
-                chatHeaderAvatar.setImage(pattern.getImage());
-                break;
-            } else if (node instanceof ImageView) {
-                chatHeaderAvatar.setImage(((ImageView) node).getImage());
-                break;
-            }
-        }
-    }
-    VBox sectionContent = new VBox();
-
-    // ====== GLOBAL VARIABLES ======
-    private ImageView showMoreAvatar;
-    private Label showMoreName;
-    private Label showMoreStatus;
-    private boolean isGroup=false;
-    Label numMembersLabel = new Label("Number of members: 15");
-    Label pinnedMsgLabel = new Label("View pinned messages");
-
-    private void updateShowMorePanel(HBox item) {
-        if (item == null) return;
-
-        sectionContent.getChildren().clear(); // reset nội dung cũ
-        if (isGroup) {
-            sectionContent.getChildren().add(numMembersLabel);
-        }
-
-        sectionContent.getChildren().add(pinnedMsgLabel);
-        // Lấy avatar
-        for (Node node : item.getChildren()) {
-            if (node instanceof ImageView) {
-                showMoreAvatar.setImage(((ImageView) node).getImage());
-                break;
-            } else if (node instanceof Circle) {
-                Circle avatarCircle = (Circle) node;
-                ImagePattern pattern = (ImagePattern) avatarCircle.getFill();
-                showMoreAvatar.setImage(pattern.getImage());
-                break;
-            }
-        }
-
-        // Lấy tên
-        String name = getItemName(item); // bạn đã có hàm này
-        showMoreName.setText(name);
-
-        // Optional: trạng thái
-        showMoreStatus.setText("Active now"); // hoặc lấy từ dữ liệu thực tế
-
-    }
-
-    private Button createIconButton(ImageView icon) {
-        Button btn = new Button();
-        btn.setGraphic(icon);
-        btn.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
-
-        btn.setOnMouseEntered(e -> {
-            icon.setScaleX(0.9);
-            icon.setScaleY(0.9);
-            icon.setOpacity(0.7);
-        });
-
-        btn.setOnMouseExited(e -> {
-            icon.setScaleX(1);
-            icon.setScaleY(1);
-            icon.setOpacity(1);
-        });
-
-        return btn;
-    }
-
-    @Override
-    public void start(Stage stage) {
+    public ChatPage(StackPane contentPane) {
+        this.contentPane = contentPane;
         // ============================================ LEFT PANEL =========================================
         HBox searchBar = createSearchBar();
 
@@ -280,7 +46,7 @@ public class ChatPage extends Application {
                 userGroupItem("./images/img.png","Nhat Uyen", "4 hrs ago", "I miss you", "unread"),
                 userGroupItem("./images/img.png","Quynh Nhu", "15 hrs ago", "Heyyyy", "unread"),
                 userGroupItem("./images/img.png","Anh Thu", "1 day ago", "OMG", "unread")
-                );
+        );
         peopleList.setPrefWidth(200);
 
 //        double rowHeight = 34 + 10*2;
@@ -1142,11 +908,241 @@ public class ChatPage extends Application {
         HBox.setHgrow(chatArea, Priority.ALWAYS);
         root.setPadding(new Insets(20));
 
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        stage.setTitle("HaloMeet Chat");
-        stage.setMaximized(true);
-        stage.show();
+      this.getChildren().add(root);
+    }
+
+    HBox createSearchBar() {
+        // Icon kính lúp
+        ImageView icon = new ImageView(new Image("images/chatPage/search-icon.png"));
+        icon.setFitWidth(16);
+        icon.setFitHeight(16);
+
+        // TextField với placeholder
+        TextField txtSearch = new TextField();
+        txtSearch.setPromptText("Search");
+        txtSearch.setStyle("""
+        -fx-background-color: transparent;
+        -fx-border-width: 0;
+        -fx-font-size: 14px;
+    """);
+
+        // Container cho search bar
+        HBox box = new HBox(10);
+        box.setPadding(new Insets(8, 12, 8, 12));
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.getChildren().addAll(icon, txtSearch);
+
+        // Style: bo góc + màu nền
+        box.setStyle("""
+        -fx-background-color: #ffffff;
+        -fx-background-radius: 30;
+        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 10, 0.5, 0, 2);
+    """);
+
+        // Hover effect
+        box.setOnMouseEntered(e -> {
+            box.setScaleX(0.99);
+            box.setScaleY(0.99);
+            box.setStyle("""
+            -fx-background-color: #E6E6FA;
+            -fx-background-radius: 30;
+            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0.5, 0, 2);
+        """);
+        });
+
+        box.setOnMouseExited(e -> {
+            box.setScaleX(1); // quay về bình thường
+            box.setScaleY(1);
+            box.setStyle("""
+            -fx-background-color: #ffffff;
+            -fx-background-radius: 30;
+            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 10, 0.5, 0, 2);
+        """);
+        });
+
+        // Khi focus vào textfield → highlight
+        txtSearch.focusedProperty().addListener((obs, oldVal, isFocused) -> {
+            if (isFocused) {
+                box.setStyle("""
+                -fx-background-color: #ffffff;
+                -fx-background-radius: 30;
+                -fx-border-radius: 30;
+                -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 10, 0.5, 0, 2);
+            """);
+            } else {
+                box.setStyle("""
+                -fx-background-color: #ffffff;
+                -fx-background-radius: 30;
+                -fx-border-radius: 30;
+                -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 10, 0.5, 0, 2);
+            """);
+            }
+        });
+
+        return box;
+    }
+
+    HBox userGroupItem(String avatarPath, String name, String timeMsg, String textMsg, String isRead) {
+
+        // Avatar hình tròn
+        Image img = new Image(avatarPath);
+        Circle avatar = new Circle(18); // bán kính 25px
+        avatar.setFill(new ImagePattern(img));
+
+        // Name + Time
+        Label lblName = new Label(name);
+        lblName.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+        Label lblTime = new Label(timeMsg);
+        lblTime.setStyle("-fx-font-size: 8px; -fx-text-fill: #777;");
+        Region spacerNameTime = new Region();                    // khoảng đẩy
+        HBox.setHgrow(spacerNameTime, Priority.ALWAYS);         // cho phép spacer giãn hết mức
+        HBox hBoxNameTime = new HBox();
+        hBoxNameTime.getChildren().addAll(lblName, spacerNameTime, lblTime);
+
+        // TextMsg + Isread
+        Label lblTextMsg = new Label(textMsg);
+        // Nếu unread thì in đậm, còn read thì bình thường
+        if ("unread".equals(isRead)) {
+            lblTextMsg.setStyle("-fx-font-size: 10px; -fx-font-weight: bold;");
+        } else {
+            lblTextMsg.setStyle("-fx-font-size: 10px; -fx-font-weight: normal;");
+        }
+        String iconPath = isRead.equals("read")
+                ? "./images/tick.png"
+                : "./images/unread.png";
+        ImageView iconIsread = new ImageView(new Image(iconPath));
+        iconIsread.setFitWidth(12);
+        iconIsread.setFitHeight(12);
+        Region spacerTxtMsg = new Region();
+        HBox.setHgrow(spacerTxtMsg, Priority.ALWAYS);
+        HBox hBoxTxtMsgIsread = new HBox(lblTextMsg, spacerTxtMsg, iconIsread);
+        hBoxTxtMsgIsread.setAlignment(Pos.CENTER_RIGHT);
+
+        Region spacerVertical = new Region();
+        VBox.setVgrow(spacerVertical, Priority.ALWAYS);
+        VBox.setVgrow(spacerVertical, Priority.ALWAYS); // cho spacer giãn hết mức dọc
+        VBox vBoxMsglog= new VBox(hBoxNameTime,spacerVertical, hBoxTxtMsgIsread);
+
+        vBoxMsglog.setMaxWidth(Double.MAX_VALUE);      // Cho phép VBox giãn
+
+        // Container
+        HBox boxMsgDialog = new HBox(5, avatar, vBoxMsglog); // khoảng cách 5px
+        //boxMsgDialog.setAlignment(Pos.CENTER_LEFT);
+        boxMsgDialog.setMaxWidth(Double.MAX_VALUE);        // cho HBox giãn full
+        HBox.setHgrow(vBoxMsglog, Priority.ALWAYS);
+        //HBox.setHgrow(boxMsgDialog, Priority.ALWAYS);
+
+        return boxMsgDialog;
+    }
+
+    private VBox chatVBox; // đưa ra ngoài để các method khác truy cập được
+    private ScrollPane scrollPane;
+
+    // Header Chat: thay vì chỉ là Label
+    private HBox chatHeader; // đưa ra ngoài để listener truy cập
+    private ImageView chatHeaderAvatar;
+    private Label chatHeaderName;
+    private HBox iconMessBox;
+    private HBox iconChatInforBox;
+
+    private String getItemName(HBox item) {
+        if (item == null) return "";
+
+        for (Node node : item.getChildren()) {
+            if (node instanceof VBox) {
+                VBox vbox = (VBox) node;
+                // Lấy HBox đầu tiên trong VBox
+                if (!vbox.getChildren().isEmpty() && vbox.getChildren().get(0) instanceof HBox) {
+                    HBox hBoxNameTime = (HBox) vbox.getChildren().get(0);
+                    for (Node inner : hBoxNameTime.getChildren()) {
+                        if (inner instanceof Label) {
+                            return ((Label) inner).getText();
+                        }
+                    }
+                }
+            }
+        }
+        return "";
+    }
+    private void updateChatHeader(HBox item) {
+        if (item == null) return;
+
+        // Lấy tên
+        String name = getItemName(item);
+        chatHeaderName.setText(name);
+
+        // Lấy avatar: HBox con đầu tiên chứa VBox con avatar?
+        for (Node node : item.getChildren()) {
+            if (node instanceof Circle) {
+                Circle avatarCircle = (Circle) node;
+                ImagePattern pattern = (ImagePattern) avatarCircle.getFill();
+                chatHeaderAvatar.setImage(pattern.getImage());
+                break;
+            } else if (node instanceof ImageView) {
+                chatHeaderAvatar.setImage(((ImageView) node).getImage());
+                break;
+            }
+        }
+    }
+    VBox sectionContent = new VBox();
+
+    // ====== GLOBAL VARIABLES ======
+    private ImageView showMoreAvatar;
+    private Label showMoreName;
+    private Label showMoreStatus;
+    private boolean isGroup=false;
+    Label numMembersLabel = new Label("Number of members: 15");
+    Label pinnedMsgLabel = new Label("View pinned messages");
+
+    private void updateShowMorePanel(HBox item) {
+        if (item == null) return;
+
+        sectionContent.getChildren().clear(); // reset nội dung cũ
+        if (isGroup) {
+            sectionContent.getChildren().add(numMembersLabel);
+        }
+
+        sectionContent.getChildren().add(pinnedMsgLabel);
+        // Lấy avatar
+        for (Node node : item.getChildren()) {
+            if (node instanceof ImageView) {
+                showMoreAvatar.setImage(((ImageView) node).getImage());
+                break;
+            } else if (node instanceof Circle) {
+                Circle avatarCircle = (Circle) node;
+                ImagePattern pattern = (ImagePattern) avatarCircle.getFill();
+                showMoreAvatar.setImage(pattern.getImage());
+                break;
+            }
+        }
+
+        // Lấy tên
+        String name = getItemName(item); // bạn đã có hàm này
+        showMoreName.setText(name);
+
+        // Optional: trạng thái
+        showMoreStatus.setText("Active now"); // hoặc lấy từ dữ liệu thực tế
+
+    }
+
+    private Button createIconButton(ImageView icon) {
+        Button btn = new Button();
+        btn.setGraphic(icon);
+        btn.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
+
+        btn.setOnMouseEntered(e -> {
+            icon.setScaleX(0.9);
+            icon.setScaleY(0.9);
+            icon.setOpacity(0.7);
+        });
+
+        btn.setOnMouseExited(e -> {
+            icon.setScaleX(1);
+            icon.setScaleY(1);
+            icon.setOpacity(1);
+        });
+
+        return btn;
     }
 
     // ================== Phương thức thêm tin nhắn ==================
@@ -1173,9 +1169,5 @@ public class ChatPage extends Application {
         chatVBox.getChildren().add(msgHBox);
         scrollPane.layout();
         scrollPane.setVvalue(1.0); // cuộn xuống cuối
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }

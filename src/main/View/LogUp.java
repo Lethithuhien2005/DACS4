@@ -82,6 +82,28 @@ public class LogUp extends Application {
         nameTextField.setPrefWidth(fieldWidth);
         nameTextField.setMaxHeight(fieldHeight);
 
+        Label fullname = new Label("Full name");
+        fullname.setFont(Font.font("Poppins", FontWeight.BOLD, 16));
+        fullname.setTextFill(Color.BLACK);
+
+        TextField fullnameTextField = new TextField();
+        fullnameTextField.setPromptText("Enter your full name");
+        fullnameTextField.setFont(Font.font("Poppins", FontWeight.NORMAL, 15));
+
+        fullnameTextField.setStyle(textFieldStyle);
+        fullnameTextField.setMaxWidth(fieldWidth);
+        fullnameTextField.setPrefHeight(fieldHeight);
+        // Change style when focusing
+        fullnameTextField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
+            if (t1) {
+                fullnameTextField.setStyle(textFieldFocus);
+            } else {
+                fullnameTextField.setStyle(textFieldStyle);
+            }
+        });
+        fullnameTextField.setPrefWidth(fieldWidth);
+        fullnameTextField.setMaxHeight(fieldHeight);
+
         Label email = new Label("Email");
         email.setFont(Font.font("Poppins", FontWeight.BOLD, 16));
         email.setTextFill(Color.BLACK);
@@ -193,10 +215,11 @@ public class LogUp extends Application {
         password.prefWidthProperty().bind(email.widthProperty());
 
         VBox nameBox = new VBox(2, name, nameTextField);
+        VBox fullnameBox = new VBox(2, fullname, fullnameTextField);
         VBox emailBox = new VBox(2, email, emailTextField);
         VBox passwordBox = new VBox(2, password, passwordField);
 
-        VBox form = new VBox(8, nameBox, emailBox, passwordBox, signInBtn);
+        VBox form = new VBox(8, nameBox, fullnameBox, emailBox, passwordBox, signInBtn);
         form.setPadding(new Insets(0, 0, 0, 120));
         form.setAlignment(Pos.CENTER_LEFT);
 

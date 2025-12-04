@@ -20,13 +20,14 @@ public class SidebarController {
     public SidebarController() {
         sidebar = new VBox(12);
         sidebar.setPrefWidth(80);
-//        sidebar.setStyle("-fx-background-color: #8900f2");
+   //  sidebar.setStyle("-fx-background-color: #8900f2");
         sidebar.setStyle("-fx-background-color: #f2ebfb");
         contentPane = new StackPane();
         contentPane.setStyle("-fx-background-color: #f5f3f4");
 
         // MenuItem meeting
         VBox homeItem = createMenuItem("/images/home.png", "Home");
+        VBox.setMargin(homeItem, new Insets(20, 0, 0, 0));
         homeItem.setOnMouseClicked(e -> setContent(new Home(contentPane)));
 
         // MenuItem meeting
@@ -35,7 +36,7 @@ public class SidebarController {
 
         // MenuItem chatting
         VBox chattingItem = createMenuItem("/images/chat.png", "Chat");
-        chattingItem.setOnMouseClicked(e -> setContent(new Chatting()));
+        chattingItem.setOnMouseClicked(e -> setContent(new ChatPage(contentPane)));
 
         // MenuItem meeting
         VBox accountItem = createMenuItem("/images/profile.png", "Account");
@@ -78,7 +79,7 @@ public class SidebarController {
 //            vBox.setStyle("-fx-background-color: #6A00F4;");
             vBox.setStyle("-fx-background-color: #fff; -fx-border-color: fff; -fx-background-radius: 10;");
             labelItem.setFont(Font.font("Poppins", FontWeight.BOLD, 12));
-            labelItem.setStyle("-fx-text-fill: #896EFF;");
+            labelItem.setStyle("-fx-text-fill: #872AFF;");
             imageView.setImage(hoverIcon);
         });
         vBox.setOnMouseExited(e -> {

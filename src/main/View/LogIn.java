@@ -160,29 +160,34 @@ public class LogIn extends Application {
 
         signInBtn.setOnAction(e -> {
 
-            ChatPage chatPage = new ChatPage();
-            Stage chatStage = new Stage();
-            chatPage.start(chatStage);
-            stage.close(); // đóng cửa sổ login
+//            ChatPage chatPage = new ChatPage();
+//            Stage chatStage = new Stage();
+//            chatPage.start(chatStage);
+//            stage.close(); // đóng cửa sổ login
 
-//            String emailText = email.getText();
-//            String passwordText = password.getText();
-//
-//            UserController userController = new UserController();
-//            String res = userController.login(emailText, passwordText);
-//            if (res.equals("SUCCESS")) {
-//                System.out.println("Log in successfully!");
-//                // Convert to homepage
-//                ChatPage chatPage = new ChatPage();
-//                Stage chatStage = new Stage();
-//                chatPage.start(chatStage);
-//                stage.close(); // đóng cửa sổ login
-//            } else {
-//                Alert alert = new Alert(Alert.AlertType.ERROR);
-//                alert.setHeaderText(null);
-//                alert.setContentText(res);
-//                alert.show();
-//            }
+            String emailText = email.getText();
+            String passwordText = password.getText();
+
+            UserController userController = new UserController();
+            String res = userController.login(emailText, passwordText);
+            if (res.equals("SUCCESS")) {
+                System.out.println("Log in successfully!");
+                // Convert to homepage
+                Dashboard dashboard = new Dashboard();
+                Stage dashboardStage = new Stage();
+                try {
+                    dashboard.start(dashboardStage);
+                    dashboardStage.close();
+                } catch (Exception ex) {
+                   ex.printStackTrace();
+                }
+
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setHeaderText(null);
+                alert.setContentText(res);
+                alert.show();
+            }
         });
 
         // Keep the same size for email, password and button when window change size

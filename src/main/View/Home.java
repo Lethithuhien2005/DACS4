@@ -330,6 +330,8 @@ public class Home extends StackPane {
         Label noMeetingLabel = new Label("No meetings found. Create one to get started!");
         noMeetingLabel.setFont(Font.font("Poppins", FontWeight.NORMAL, 15));
         noMeetingLabel.setStyle("-fx-text-fill: gray");
+        noMeetingLabel.setWrapText(true);
+
 
         noMeetingBox.getChildren().addAll(noMeetingImageView, noMeetingLabel);
         noMeetingBox.setAlignment(Pos.CENTER);
@@ -476,10 +478,7 @@ public class Home extends StackPane {
         VBox.setMargin(timeCreateMeeting2, new Insets(2, 0, 15, 0));
 
 
-
-
-
-        //        meetLinks.getChildren().addAll(label2, noMeetingBox); // khi khong co meeting nao
+//        meetLinks.getChildren().addAll(label2, noMeetingBox); // khi khong co meeting nao
 
         HBox meetingTodayFontend = new HBox(5);
         meetingTodayFontend.getChildren().addAll(meetingToday1, meetingToday2);
@@ -494,9 +493,6 @@ public class Home extends StackPane {
         VBox.setMargin(meetLinks, new Insets(0, 30, 30, 30));
 
         leftContainer.getChildren().addAll(welcomeContainer, meetingBox, contentMeeting, meetLinks);
-
-
-
 
         // Right part
 
@@ -579,30 +575,30 @@ public class Home extends StackPane {
         label3.setFont(Font.font("Poppins", FontWeight.BOLD, 20));
 
         List<Meeting> meetings = Arrays.asList(
-//                new Meeting(
-//                        "Software Quality Assessment and Improvement",
-//                        "02-12-2025 02:25 PM",
-//                        "Nguyen Huu Quynh Anh",
-//                        "/images/avatar2.jpg"
-//                ),
-//                new Meeting(
-//                        "AI-Powered Automation in Enterprise Applications",
-//                        "05-12-2025 01:00 PM",
-//                        "Tran Bao Minh",
-//                        "/images/avatar3.jpg"
-//                ),
-//                new Meeting(
-//                        "Machine Learning for Real-time Decision Making",
-//                        "08-12-2025 09:30 AM",
-//                        "Le Thi Thu Ha",
-//                        "/images/avatar4.jpg"
-//                ),
-//                new Meeting(
-//                        "Machine Learning for Real-time Decision Making",
-//                        "08-12-2025 09:30 AM",
-//                        "Le Thi Thu Ha",
-//                        "/images/avatar4.jpg"
-//                )
+                new Meeting(
+                        "Software Quality Assessment and Improvement",
+                        "25-11-2025 02:25 PM",
+                        "Nguyen Huu Quynh Anh",
+                        "/images/avatar2.jpg"
+                ),
+                new Meeting(
+                        "AI-Powered Automation in Enterprise Applications",
+                        "27-11-2025 01:00 PM",
+                        "Tran Bao Minh",
+                        "/images/avatar3.jpg"
+                ),
+                new Meeting(
+                        "Machine Learning for Real-time Decision Making",
+                        "28-11-2025 09:30 AM",
+                        "Le Thi Thu Ha",
+                        "/images/avatar4.jpg"
+                ),
+                new Meeting(
+                        "Company IT Strategy Review",
+                        "29-11-2025 7:30 AM",
+                        "Le Thi Thu Ha",
+                        "/images/avatar4.jpg"
+                )
         );
 
         VBox meetingListContainer = new VBox(15);
@@ -618,6 +614,7 @@ public class Home extends StackPane {
             noRecentMeetingLabel.setFont(Font.font("Poppins", FontWeight.NORMAL, 13));
             noRecentMeetingLabel.setStyle("-fx-text-fill: gray");
             noRecentMeetingLabel.setWrapText(true);
+            noRecentMeetingLabel.prefWidthProperty().bind(recentMeetinContainer.widthProperty());
 
             noRecentMeetingBox.getChildren().addAll(noMeetingImageView, noMeetingLabel);
             noRecentMeetingBox.setAlignment(Pos.CENTER);
@@ -630,16 +627,17 @@ public class Home extends StackPane {
             meetingListContainer.getChildren().add(createMeetingItem(m));
         }
 
-//        ScrollPane scroll = new ScrollPane(meetingListContainer);
-//        scroll.setFitToWidth(true);
-//        scroll.setStyle("-fx-background-color: #fff;");
-//        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        ScrollPane scroll = new ScrollPane(meetingListContainer);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: #fff;");
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 
-//        recentMeetinContainer.getChildren().addAll(label3, scroll);
-//        scroll.prefHeightProperty().bind(rightContainer.heightProperty());
+        recentMeetinContainer.getChildren().addAll(label3, scroll);
+        scroll.prefHeightProperty().bind(rightContainer.heightProperty());
 
-        recentMeetinContainer.getChildren().addAll(label3, meetingListContainer);
-        meetingListContainer.prefHeightProperty().bind(rightContainer.heightProperty());
+        // Neu khong co cuoc hop gan day
+//        recentMeetinContainer.getChildren().addAll(label3, meetingListContainer);
+//        meetingListContainer.prefHeightProperty().bind(rightContainer.heightProperty());
 
         rightContainer.getChildren().addAll(accountBox, recentMeetinContainer);
         VBox.setMargin(label3, new Insets(0, 0, 15, 0));
@@ -657,8 +655,6 @@ public class Home extends StackPane {
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 
         getChildren().add(scrollPane);
-
-
     }
 
     private void setupToggleButton(ToggleButton btn, Image defaultIcon, Image activeIcon,  String normalStyle, String hoverStyle) {
