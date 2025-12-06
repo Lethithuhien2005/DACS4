@@ -4,6 +4,7 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
@@ -735,7 +736,7 @@ public class ChatPage extends Application {
             if (newSel != null) {
                 isGroup = false;
                 updateChatHeader(newSel);
-                updateShowMorePanel(newSel); // 🔑 cập nhật panel
+                updateShowMorePanel(newSel); // cập nhật panel
                 chatVBox.getChildren().clear();
             }
         });
@@ -744,7 +745,7 @@ public class ChatPage extends Application {
             if (newSel != null) {
                 isGroup=true;
                 updateChatHeader(newSel);
-                updateShowMorePanel(newSel); // 🔑 cập nhật panel
+                updateShowMorePanel(newSel);
                 chatVBox.getChildren().clear();
             }
         });
@@ -842,6 +843,20 @@ public class ChatPage extends Application {
             -fx-background-radius: 50; 
             -fx-cursor: hand;
         """);
+
+
+        viewProf.setOnAction(e -> {
+            String selectedName = chatHeaderName.getText();
+            Image selectedAvatar = chatHeaderAvatar.getImage(); // <<< lấy avatar hiện t
+
+            //ProfilePage profilePage = new ProfilePage(stage);
+            ProfilePage profilePage = new ProfilePage(stage, selectedName, selectedAvatar);
+
+            Stage profileStage = new Stage();  // tạo stage mới
+            profilePage.start(profileStage);
+            stage.hide();
+        });
+
         Button notif = createIconButton(notifIcon);
         notif.setPadding(new Insets(10));
         notif.setStyle("""
@@ -1083,7 +1098,6 @@ public class ChatPage extends Application {
 
 
         // ================================= ROOT ==================================
-        //HBox root = new HBox(leftPane, chatArea);
         HBox root = new HBox(leftPane, mainChatContainer);
 
         String scrollMoreStyle = """

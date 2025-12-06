@@ -1,0 +1,20 @@
+.custom-radio > .radio {
+    -fx-background-color: white;
+    -fx-border-color: #7A1EFF;
+    -fx-border-width: 2;
+    -fx-border-radius: 50%;
+    -fx-padding: 4;
+}
+
+.custom-radio:selected > .radio {
+    -fx-background-color: white;
+    -fx-border-color: #7A1EFF;
+}
+
+.custom-radio > .radio > .dot {
+    -fx-background-color: transparent;
+}
+
+.custom-radio:selected > .radio > .dot {
+    -fx-background-color: #7A1EFF;
+}
