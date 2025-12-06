@@ -37,10 +37,19 @@ public class SidebarController {
         // MenuItem chatting
         VBox chattingItem = createMenuItem("/images/chat.png", "Chat");
         chattingItem.setOnMouseClicked(e -> setContent(new ChatPage(contentPane)));
+//        chattingItem.setOnMouseClicked(e -> {
+//            if (chatPage == null) chatPage = new ChatPage(contentPane);
+//            setContent(chatPage);
+//        });
 
-        // MenuItem meeting
+
+        // MenuItem account setting
         VBox accountItem = createMenuItem("/images/profile.png", "Account");
-        accountItem.setOnMouseClicked(e -> setContent(new Account()));
+        accountItem.setOnMouseClicked(e -> {
+//            String email = loggedInUserEmail; // email bạn lấy từ login
+            String email = "quynhanhnguyen@gmail.com";
+            setContent(new PersonalProfile(contentPane, email));
+        });
 
         // Spacer
         Pane spacer = new Pane();

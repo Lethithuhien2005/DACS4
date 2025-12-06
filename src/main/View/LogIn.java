@@ -177,11 +177,11 @@ public class LogIn extends Application {
                 Stage dashboardStage = new Stage();
                 try {
                     dashboard.start(dashboardStage);
-                    dashboardStage.close();
+//                    dashboardStage.close();
                 } catch (Exception ex) {
                    ex.printStackTrace();
                 }
-
+                stage.close();
             } else {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setHeaderText(null);

@@ -23,6 +23,12 @@ import javafx.stage.Stage;
 
 public class ChatPage extends StackPane {
     private StackPane contentPane;
+    private Stage stage; // thêm biến stage
+
+//    public ChatPage(Stage stage, StackPane contentPane) {
+//        this.stage = stage;
+//        this.contentPane = contentPane;
+//    }
 
     public ChatPage(StackPane contentPane) {
         this.contentPane = contentPane;
@@ -615,12 +621,17 @@ public class ChatPage extends StackPane {
             String selectedName = chatHeaderName.getText();
             Image selectedAvatar = chatHeaderAvatar.getImage(); // <<< lấy avatar hiện t
 
-            //ProfilePage profilePage = new ProfilePage(stage);
-            ProfilePage profilePage = new ProfilePage(stage, selectedName, selectedAvatar);
+//            ProfilePage profilePage = new ProfilePage(stage, selectedName, selectedAvatar);
+//
+//            Stage profileStage = new Stage();  // tạo stage mới
+//            profilePage.start(profileStage);
+//            stage.hide();
+            // Tạo ProfilePage mới
+            ProfilePage profilePage = new ProfilePage(contentPane, selectedName, selectedAvatar);
 
-            Stage profileStage = new Stage();  // tạo stage mới
-            profilePage.start(profileStage);
-            stage.hide();
+            // Thay nội dung trung tâm của Dashboard
+//            contentPane.getChildren().clear();  // xóa nội dung cũ (Chat)
+//            contentPane.getChildren().add(profilePage);  // thêm ProfilePage
         });
 
         Button notif = createIconButton(notifIcon);
