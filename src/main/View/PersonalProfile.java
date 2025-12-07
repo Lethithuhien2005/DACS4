@@ -15,6 +15,10 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import main.Controller.UserController;
+import main.Model.Entities.User;
+import main.Model.PasswordUtils;
+import main.util.Session;
 
 import java.util.Objects;
 
@@ -26,29 +30,22 @@ public class PersonalProfile extends StackPane{
     private Image currentAvatar = new Image("./images/chatPage/profile.png");;
     private String currentEmail;
 
+    String email = Session.getInstance().getEmail();  // <<< LẤY EMAIL ĐÃ LƯU
+    UserController userController = new UserController();
+    // Lấy User từ DB
+    User user = userController.getUserProfile(email);  // giả sử gọi DAO bên trong Controller
+
+
+
 
     String bio = "Love coding, traveling, and coffee";
     String skill = "Java, JavaFX, SQL";
     String gender = "Male";
     String lastName = "Nguyen";
     String firstName = "Quynh Anh";
-    String email = "quynhanh@example.com";
     String website = "https://quynhanh.dev";
     String location = "Ho Chi Minh, Vietnam";
 
-//    public PersonalProfile(Stage chatStage) {
-//        this.chatStage = chatStage;
-//    }
-//
-//    public PersonalProfile() {
-//        // constructor mặc định nếu cần
-//    }
-
-//    public PersonalProfile(Stage chatStage, String currentName, Image currentAvatar) {
-//        this.chatStage = chatStage;
-//        this.currentName = currentName;
-//        this.currentAvatar = currentAvatar;
-//    }
 
     public PersonalProfile(StackPane contentPane, String currentEmail) {
         this.contentPane = contentPane;
@@ -60,7 +57,6 @@ public class PersonalProfile extends StackPane{
     private VBox rightVBox;
     private Button activeMenuButton = null;
 
-//    public void start(Stage stage) {
     private void initializeUI() {
         // ====== ROOT ======
         HBox root = new HBox();
@@ -76,22 +72,6 @@ public class PersonalProfile extends StackPane{
         backIcon.setFitHeight(23);
         backIcon.setPreserveRatio(true);
 
-        // BUTTON back
-//        Button backBtn = new Button();
-//        backBtn.setGraphic(backIcon);   // dùng icon thay cho text
-//        backBtn.setStyle("""
-//             -fx-background-color: transparent;
-//             -fx-padding: 0;
-//             -fx-cursor: hand;
-//        """);
-//
-//        backBtn.setOnAction(e -> {
-//            stage.close();
-//            chatStage.show();
-//        });
-//
-//        StackPane.setAlignment(backBtn, Pos.TOP_LEFT);
-//        StackPane.setMargin(backBtn, new Insets(5,0,0,30));
 
 
         double size = 160;
@@ -121,7 +101,7 @@ public class PersonalProfile extends StackPane{
         VBox leftVBox = new VBox();
         leftVBox.setAlignment(Pos.TOP_CENTER);
         leftVBox.setSpacing(20);
-        leftVBox.setPadding(new Insets(20));
+        leftVBox.setPadding(new Insets(40, 20, 0, 20));
 //        leftVBox.setStyle("-fx-background-color: #FFFFFF;");
         leftVBox.setStyle("""
             -fx-background-color: white;
@@ -135,14 +115,36 @@ public class PersonalProfile extends StackPane{
         // Avatar (đã có từ code trước)
         leftVBox.getChildren().add(avatar);
 
-        // Fullname
-        Label fullnameLabel = new Label("Nguyễn Văn A");
-        fullnameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        Label fullnameLabel;
+        Label usernameLabel;
+        // Kiểm tra null để tránh lỗi
+        if (user == null) {
+            System.out.println("User not found!");
+            return;
+        }
+        if (user != null) {
+            // Fullname
+            fullnameLabel = new Label(user.getFullName()); // hoặc fullName nếu có
+            fullnameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
 
-        // Username
-        Label usernameLabel = new Label("@nguyenvana");
-        usernameLabel.setFont(Font.font("Arial", 14));
-        usernameLabel.setTextFill(Color.GRAY);
+            // Username
+            usernameLabel = new Label("_" + user.getUsername() + "_");
+            usernameLabel.setFont(Font.font("Arial", 14));
+            usernameLabel.setTextFill(Color.GRAY);
+            usernameLabel.setPadding(new Insets(0, 0, 20, 0));
+
+        } else {
+            fullnameLabel = new Label("Unknown");
+            usernameLabel = new Label("@unknown");
+        }
+
+        // Tạo label hoặc cập nhật label
+//        Label emailLabel = new Label();
+//        emailLabel.setFont(Font.font("Arial", 14));
+//        emailLabel.setTextFill(Color.GRAY);
+//        emailLabel.setText(email);  // <- đặt email vào label
+//        emailLabel.setPadding(new Insets(0, 0, 20, 0));
+
 
         // Menu buttons
         Button btnPersonalInfo = createMenuButton("Personal Information");
@@ -150,7 +152,7 @@ public class PersonalProfile extends StackPane{
         Button btnLogout = createMenuButton("Log Out");
 
         leftVBox.getChildren().addAll(fullnameLabel, usernameLabel,
-                btnPersonalInfo, btnLoginPassword, btnLogout);
+                btnPersonalInfo, btnLoginPassword);
 
 
         rightVBox = new VBox();
@@ -456,7 +458,7 @@ public class PersonalProfile extends StackPane{
         btn.setStyle("""
             -fx-background-color: transparent;
             -fx-text-fill: #4A4A4A;
-            -fx-padding: 10 15;
+            -fx-padding: 13 18;
             -fx-cursor: hand;
         """);
 
@@ -465,7 +467,7 @@ public class PersonalProfile extends StackPane{
                 btn.setStyle("""
                     -fx-background-color: #EFE9FF;
                     -fx-text-fill: black;
-                    -fx-padding: 10 15;
+                    -fx-padding: 13 18;
                 """);
             }
         });
@@ -475,14 +477,13 @@ public class PersonalProfile extends StackPane{
                 btn.setStyle("""
                     -fx-background-color: transparent;
                     -fx-text-fill: #4A4A4A;
-                    -fx-padding: 10 15;
+                    -fx-padding: 13 18;
                 """);
             }
         });
 
         return btn;
     }
-
     private void highlightMenu(Button btn) {
 
         // reset nút cũ
@@ -490,7 +491,7 @@ public class PersonalProfile extends StackPane{
             activeMenuButton.setStyle("""
             -fx-background-color: transparent;
             -fx-text-fill: #4A4A4A;
-            -fx-padding: 10 15;
+            -fx-padding: 13 18;
         """);
         }
 
@@ -498,15 +499,20 @@ public class PersonalProfile extends StackPane{
         btn.setStyle("""
         -fx-background-color: #A569FF;
         -fx-text-fill: white;
-        -fx-padding: 10 15;
+        -fx-padding: 13 18;
         -fx-background-radius: 6;
     """);
 
         activeMenuButton = btn;
     }
-
     private void loadPersonalInfo() {
         rightVBox.getChildren().clear();
+
+
+        // Lấy email của user đang đăng nhập
+        String email = Session.getInstance().getEmail();
+        UserController userController = new UserController();
+        User user = userController.getUserProfile(email);  // get từ DAO
 
         Label title = new Label("Personal Information");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 23));
@@ -524,10 +530,8 @@ public class PersonalProfile extends StackPane{
         // Radio buttons
         RadioButton maleRadio = new RadioButton("Male");
         RadioButton femaleRadio = new RadioButton("Female");
-
         maleRadio.setToggleGroup(genderGroup);
         femaleRadio.setToggleGroup(genderGroup);
-
         // Style radio button (xoá màu xanh, chỉ màu tím)
         maleRadio.getStyleClass().add("custom-radio");
         femaleRadio.getStyleClass().add("custom-radio");
@@ -538,11 +542,16 @@ public class PersonalProfile extends StackPane{
 
         Label genderLabel = new Label("Gender");
         genderLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
-
         HBox genderBox = new HBox(40, genderLabel, genderOptions);
         genderBox.setAlignment(Pos.CENTER_LEFT);
         genderBox.setSpacing(60);
 
+        // Đặt gender nếu có dữ liệu
+        if (user != null && user.getGender() != null) {  // giả sử bạn lưu gender trong role hoặc thêm gender
+            String gender = user.getGender(); // nếu bạn thêm trường gender thì lấy user.getGender()
+            if (gender.equalsIgnoreCase("Male")) maleRadio.setSelected(true);
+            else if (gender.equalsIgnoreCase("Female")) femaleRadio.setSelected(true);
+        }
 
         // ===========================
         // FIRST NAME + LAST NAME
@@ -560,6 +569,25 @@ public class PersonalProfile extends StackPane{
         firstNameLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
         lastNameLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
 
+        String fullName = user.getFullName() != null ? user.getFullName() : "";
+        String firstName = "";
+        String lastName = "";
+
+        if (!fullName.isEmpty()) {
+            fullName = fullName.trim();
+            int lastSpace = fullName.lastIndexOf(" ");
+            if (lastSpace != -1) {
+                firstName = fullName.substring(0, lastSpace);
+                lastName = fullName.substring(lastSpace + 1);
+            } else {
+                firstName = fullName;
+                lastName = "";
+            }
+        }
+
+        // Set vào TextField
+        firstNameField.setText(firstName);
+        lastNameField.setText(lastName);
 
         // Mỗi field đặt trong một VBox riêng
         VBox firstNameBox = new VBox(5, firstNameLabel, firstNameField);
@@ -580,22 +608,37 @@ public class PersonalProfile extends StackPane{
         // EMAIL
         // ===========================
         TextField emailField = createRoundedTextField();
+        emailField.setText(user != null && user.getEmail() != null ? user.getEmail() : "");
+        // Read only
+        emailField.setEditable(false);
+        // Style nhạt hơn (màu chữ xám)
+        emailField.setStyle("""
+            -fx-opacity: 0.7;          /* nhạt hơn */
+            -fx-background-color: #F0F0F0; /* nền nhạt */
+        """);
         VBox emailBox = labeledField("Email", emailField);
 
         // ===========================
         // ADDRESS
         // ===========================
         TextField addressField = createRoundedTextField();
+        if (user != null && user.getAddress() != null && !user.getAddress().isEmpty()) {
+            addressField.setText(user.getAddress());
+        } else {
+            addressField.setPromptText("Address");
+        }
         VBox addressBox = labeledField("Address", addressField);
 
         // ===========================
         // PHONE + DATE OF BIRTH
         // ===========================
         TextField phoneField = createRoundedTextField();
+        phoneField.setText(user != null && user.getPhone() != null ? user.getPhone() : "");
         phoneField.setPromptText("Phone Number");
 
         DatePicker dobPicker = new DatePicker();
         dobPicker.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+        dobPicker.setValue(user.getDob() != null ? user.getDob() : null);
 
         StackPane dobWrapper = new StackPane(dobPicker);
         dobWrapper.setStyle("""
@@ -643,6 +686,11 @@ public class PersonalProfile extends StackPane{
         // LOCATION
         // ===========================
         TextField locationField = createRoundedTextField();
+        if (user != null && user.getAddress() != null && !user.getAddress().isEmpty()) {
+            locationField.setText(user.getAddress());
+        } else {
+            locationField.setPromptText("Location");
+        }
         VBox locationBox = labeledField("Location", locationField);
 
         // ===========================
@@ -675,6 +723,73 @@ public class PersonalProfile extends StackPane{
         """);
         saveBtn.setMaxWidth(Double.MAX_VALUE);
         saveBtn.setPrefHeight(50);
+
+        discardBtn.setOnAction(e -> {
+            if (user != null) {
+                // Gender
+                String gender = user.getGender();
+                if (gender != null) {
+                    maleRadio.setSelected(gender.equalsIgnoreCase("Male"));
+                    femaleRadio.setSelected(gender.equalsIgnoreCase("Female"));
+                } else {
+                    genderGroup.selectToggle(null);  // bỏ chọn nếu null
+                }
+                // Full Name -> First + Last
+                String fullNamee = user.getFullName() != null ? user.getFullName() : "";
+                if (!fullNamee.isEmpty()) {
+                    fullNamee = fullNamee.trim();
+                    int lastSpace = fullNamee.lastIndexOf(" ");
+                    firstNameField.setText(lastSpace != -1 ? fullNamee.substring(0, lastSpace) : fullNamee);
+                    lastNameField.setText(lastSpace != -1 ? fullNamee.substring(lastSpace + 1) : "");
+                } else {
+                    firstNameField.setText("");
+                    lastNameField.setText("");
+                }
+                // Email
+                emailField.setText(user.getEmail() != null ? user.getEmail() : "");
+                // Phone
+                phoneField.setText(user.getPhone() != null ? user.getPhone() : "");
+                // Address
+                addressField.setText(user.getAddress() != null ? user.getAddress() : "");
+                // Location (nếu có field riêng)
+                locationField.setText(user.getAddress() != null ? user.getAddress() : "");
+                // Date of Birth
+                dobPicker.setValue(user.getDob());
+            }
+        });
+        saveBtn.setOnAction(e -> {
+            if (user != null) {
+                // Update dữ liệu từ form
+                String updatedFullName = firstNameField.getText().trim() + " " + lastNameField.getText().trim();
+                user.setFullName(updatedFullName);
+
+                String updatedGender = maleRadio.isSelected() ? "Male" : femaleRadio.isSelected() ? "Female" : null;
+                user.setGender(updatedGender);
+
+                user.setPhone(phoneField.getText().trim());
+                user.setAddress(addressField.getText().trim());
+                user.setDob(dobPicker.getValue());
+
+                // Nếu có location riêng, dùng locationField.getText()
+
+                // Update vào database
+                UserController userControllerUpdate = new UserController();
+                boolean success = userControllerUpdate.updateUserProfile(user);  // bạn cần viết hàm này trong UserController -> DAO
+
+                if (success) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setHeaderText(null);
+                    alert.setContentText("User profile updated successfully!");
+                    alert.show();
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setHeaderText(null);
+                    alert.setContentText("Update failed. Please try again.");
+                    alert.show();
+                }
+            }
+        });
+
 
         // -------------------------------
         // HOVER EFFECTS (Scale + Brightness)
@@ -797,12 +912,63 @@ public class PersonalProfile extends StackPane{
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         title.setPadding(new Insets(0, 0, 30, 0));
 
-        VBox form = new VBox(24);
+        PasswordField currentPasswordField = createRoundedPasswordField();
+        PasswordField newPasswordField = createRoundedPasswordField();
+        PasswordField confirmPasswordField = createRoundedPasswordField();
+
+        // Labels hiển thị thông báo
+        Label currentPasswordMsg = new Label();
+        Label confirmPasswordMsg = new Label();
+
+        currentPasswordMsg.setFont(Font.font("System", 9));
+        confirmPasswordMsg.setFont(Font.font("System", 9));
+
+        currentPasswordField.textProperty().addListener((obs, oldText, newText) -> {
+            String email = Session.getInstance().getEmail();
+            UserController userController = new UserController();
+            User user = userController.getUserProfile(email);
+
+            if (user != null) {
+                String salt = "hienanh";
+                String hashedInput = PasswordUtils.hashPassword(newText + salt);
+
+                if (hashedInput.equals(user.getPassword())) {
+                    currentPasswordMsg.setText("Current password is correct");
+                    currentPasswordMsg.setTextFill(Color.GREEN);
+                } else {
+                    currentPasswordMsg.setText("Password is incorrect");
+                    currentPasswordMsg.setTextFill(Color.RED);
+                }
+            }
+        });
+
+        // Check Confirm New Pass
+        confirmPasswordField.textProperty().addListener((obs, oldText, newText) -> {
+            String newPass = newPasswordField.getText();
+            if (newPass.equals(newText)) {
+                confirmPasswordMsg.setText("Passwords match");
+                confirmPasswordMsg.setTextFill(Color.GREEN);
+            } else {
+                confirmPasswordMsg.setText("Passwords do not match");
+                confirmPasswordMsg.setTextFill(Color.RED);
+            }
+        });
+
+//        VBox form = new VBox(24);
+//        form.getChildren().addAll(
+//                labeledField("Current Password", createRoundedPasswordField()),
+//                labeledField("New Password", createRoundedPasswordField()),
+//                labeledField("Confirm Password", createRoundedPasswordField())
+//        );
+        VBox form = new VBox(10);
         form.getChildren().addAll(
-                labeledField("Current Password", createRoundedPasswordField()),
-                labeledField("New Password", createRoundedPasswordField()),
-                labeledField("Confirm Password", createRoundedPasswordField())
+                labeledField("Current Password", currentPasswordField),
+                currentPasswordMsg,
+                labeledField("New Password", newPasswordField),
+                labeledField("Confirm Password", confirmPasswordField),
+                confirmPasswordMsg
         );
+
 
         Button saveBtn = new Button("Save Changes");
         saveBtn.setStyle("-fx-background-color: #9966CC; -fx-text-fill: white; -fx-padding: 10 20; -fx-font-size: 15px; -fx-font-size: 15px;  ");
@@ -814,6 +980,98 @@ public class PersonalProfile extends StackPane{
         HBox btnBox = new HBox(saveBtn);
         btnBox.setAlignment(Pos.CENTER);
         btnBox.setPadding(new Insets(30, 0, 0, 0)); // khoảng cách top
+
+        // Set On Action for SAVE BTN
+//        saveBtn.setOnAction(e -> {
+//            String currentPass = currentPasswordField.getText();
+//            String newPass = newPasswordField.getText();
+//            String confirmPass = confirmPasswordField.getText();
+//
+//            String email = Session.getInstance().getEmail();
+//            UserController userController = new UserController();
+//            User user = userController.getUserProfile(email);
+//
+//            if (user == null) return;
+//
+//            // Check current password
+//            String salt = "hienanh";
+//            String hashedCurrent = PasswordUtils.hashPassword(currentPass + salt);
+//            if (!hashedCurrent.equals(user.getPassword())) {
+//                currentPasswordMsg.setText("Password is incorrect");
+//                currentPasswordMsg.setTextFill(Color.RED);
+//                return;
+//            }
+//
+//            // Check confirm password
+//            if (!newPass.equals(confirmPass)) {
+//                confirmPasswordMsg.setText("Passwords do not match");
+//                confirmPasswordMsg.setTextFill(Color.RED);
+//                return;
+//            }
+//
+//
+//            // Update password
+//
+//            String salt = "hienanh";
+//            String hashedPassword = PasswordUtils.hashPassword(newPass + salt);
+//            user.setPassword(hashedPassword);
+//
+//            UserController userController = new UserController();
+//            userController.updateUserPassword(user);
+//
+//            currentPasswordMsg.setText("Password updated successfully");
+//            currentPasswordMsg.setTextFill(Color.GREEN);
+//        });
+        saveBtn.setOnAction(e -> {
+            String currentPass = currentPasswordField.getText();
+            String newPass = newPasswordField.getText();
+            String confirmPass = confirmPasswordField.getText();
+
+            String email = Session.getInstance().getEmail();
+            UserController userController = new UserController();
+            User user = userController.getUserProfile(email);
+
+            if (user == null) return;
+
+            String salt = "hienanh"; // dùng 1 lần duy nhất
+
+            // Check current password
+            String hashedCurrent = PasswordUtils.hashPassword(currentPass + salt);
+            if (!hashedCurrent.equals(user.getPassword())) {
+                currentPasswordMsg.setText("Password is incorrect");
+                currentPasswordMsg.setTextFill(Color.RED);
+                return;
+            }
+
+            // Check confirm password
+            if (!newPass.equals(confirmPass)) {
+                confirmPasswordMsg.setText("Passwords do not match");
+                confirmPasswordMsg.setTextFill(Color.RED);
+                return;
+            }
+
+            // Update password
+            String hashedPassword = PasswordUtils.hashPassword(newPass + salt);
+            user.setPassword(hashedPassword);
+            userController.updateUserPassword(user);
+
+            currentPasswordMsg.setText("Password updated successfully");
+            currentPasswordMsg.setTextFill(Color.GREEN);
+
+            // Hiển thị Alert thành công
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Success");
+            alert.setHeaderText(null); // bỏ tiêu đề phụ
+            alert.setContentText("Password updated successfully!");
+            alert.showAndWait();
+
+            currentPasswordField.clear();
+            newPasswordField.clear();
+            confirmPasswordField.clear();
+            currentPasswordMsg.setText("");
+            confirmPasswordMsg.setText("");
+        });
+
 
         rightVBox.getChildren().addAll(title, form, btnBox);
     }
