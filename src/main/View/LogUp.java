@@ -183,9 +183,10 @@ public class LogUp extends Application {
             String username = nameTextField.getText();
             String emailText = emailTextField.getText();
             String passwordText = passwordField.getText();
+            String fullName = fullnameTextField.getText();
 
             UserController logUpController = new UserController();
-            String result = logUpController.register(username, emailText, passwordText);
+            String result = logUpController.register(username, fullName, emailText, passwordText);
 
             if (result.equals("SUCCESS")) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);

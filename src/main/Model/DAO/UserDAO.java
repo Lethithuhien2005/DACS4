@@ -8,11 +8,11 @@ import main.Model.PasswordUtils;
 import org.bson.Document;
 
 import java.time.ZoneId;
+import java.util.Date;
 
 import static com.mongodb.client.model.Filters.eq;
 
 
-import static javax.management.Query.eq;
 
 // Truy xuat MongoDB
 public class UserDAO {
@@ -32,10 +32,13 @@ public class UserDAO {
     // Add a user to database
     public void addUser(User user) {
                Document doc = new Document("username", user.getUsername())
-                .append("email", user.getEmail())
-                .append("password", user.getPassword())
-                .append("role", user.getRole());
-        users.insertOne(doc);
+                       .append("fullName", user.getFullName())
+                       .append("email", user.getEmail())
+                        .append("password", user.getPassword())
+                        .append("role", user.getRole())
+                        .append("created_at", new Date())
+                        .append("updated_at", new Date());
+                users.insertOne(doc);
     }
 
     // login to app
@@ -64,6 +67,12 @@ public class UserDAO {
                         ? doc.getDate("dob").toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
                         : null                       // dob
         );
+
+        user.setUserId(doc.getObjectId("_id"));   // ✅ LẤY ObjectId từ Mongo
+        // ⭐ THÊM 2 DÒNG NÀY
+        user.setCreatedAt(doc.getDate("created_at"));
+        user.setUpdatedAt(doc.getDate("updated_at"));
+
         return user;
     }
 
@@ -87,6 +96,14 @@ public class UserDAO {
     public void updatePassword(String email, String newHashedPassword) {
         users.updateOne(eq("email", email), new Document("$set", new Document("password", newHashedPassword)));
     }
+
+    public void updateUpdatedAt(String email) {
+        users.updateOne(
+                eq("email", email),
+                new Document("$set", new Document("updated_at", new java.util.Date()))
+        );
+    }
+
 
 
 }
