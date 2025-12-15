@@ -4,25 +4,28 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import main.Model.DTO.Participant;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MeetingUI extends StackPane {
     private HBox rootLayout;            // HBox chia 7:3
     private VBox videoContainer;   // vùng video
-    private VBox chatContainer;         // vùng chat
+    private VBox rightContainer;         // vùng chat
     private List<VideoTile> tiles;
     private VideoCallPane videoCallPane;
+    List<Participant> participants = new ArrayList<>();
 
     public MeetingUI() {
         rootLayout = new HBox();
@@ -104,24 +107,80 @@ public class MeetingUI extends StackPane {
 
         videoContainer.getChildren().addAll(videoCallPane, controlBar);
 
-        videoCallPane.prefWidthProperty().bind(rootLayout.widthProperty().multiply(0.7));
-        chatContainer.prefWidthProperty().bind(rootLayout.widthProperty().multiply(0.3));
-
         // RIGHT PART (3 phan)
-        VBox rightContainer = new VBox(15);
+        rightContainer = new VBox(15);
 
         // List of participants
         VBox listContainer = new VBox(5);
+        listContainer.setPadding(new Insets(10));
+        VBox.setMargin(listContainer, new Insets(15, 0, 0, 0));
 
+        // Title
         HBox numberParticipants = new HBox();
+        numberParticipants.setPadding(new Insets(10));
+        numberParticipants.setStyle("-fx-background-color: #F6EBFF; -fx-background-radius: 15; -fx-border-radius: 15;");
+
         Label numberLabel = new Label("Participants");
-        chatContainer = new VBox();
-        chatContainer.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc;");
+        numberLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 16));
+        numberLabel.setStyle("-fx-text-fill: #9d4edd");
+        HBox.setMargin(numberLabel, new Insets(0, 10, 0, 10));
+
+        Label numberOfParticipant = new Label("20");
+        numberOfParticipant.setFont(Font.font("Poppins", FontWeight.BOLD, 16));
+        numberOfParticipant.setStyle("-fx-text-fill: #9d4edd");
+
+        ImageView add_participant_image = new ImageView(new Image(getClass().getResource("/images/add_participant.png").toExternalForm()));
+        add_participant_image.setFitWidth(20);
+        add_participant_image.setFitHeight(20);
+        Button addParticipantButton = new Button();
+        addParticipantButton.setGraphic(add_participant_image);
+        addParticipantButton.setPrefSize(24, 24);
+        addParticipantButton.setMinSize(24, 24);
+        addParticipantButton.setMaxSize(24, 24);
+        addParticipantButton.setStyle("-fx-background-color: #F6EBFF");
+        HBox.setMargin(addParticipantButton, new Insets(0, 0, 0, 150));
+
+        // Hien thi danh sach nguoi tham gia
+        VBox listParticipants = new VBox(10);
+        getParticipants();
+        for (Participant p : participants) {
+            HBox row = new HBox(10);
+            row.setPadding(new Insets(5));
+
+            ImageView avatar = new ImageView(new Image(p.getAvatar()));
+            avatar.setFitWidth(40);
+            avatar.setFitHeight(40);
+            avatar.setClip(new Circle(20, 20, 20));
+
+            Label nameLabel = new Label(p.getFullname());
+            Label roleLabel = new Label(p.getRole());
+            Label micStatus = new Label(p.isMicOn() ? "🔇" : "🎤");
+            Label cameraStatus = new Label(p.isCameraOn() ? "🔇" : "🎤");
+
+            row.getChildren().addAll(avatar, nameLabel, roleLabel, micStatus, cameraStatus);
+            listParticipants.getChildren().add(row);
+        }
+
+        ScrollPane scrollPane = new ScrollPane(listParticipants);
+        scrollPane.setFitToWidth(true);
+
+        numberParticipants.getChildren().addAll(numberLabel, numberOfParticipant, addParticipantButton);
+        listContainer.getChildren().addAll(numberParticipants, scrollPane);
+        rightContainer = new VBox();
+        rightContainer.setStyle("-fx-background-color: #fff; -fx-background-radius: 10; -fx-border-radius: 10;");
+        rightContainer.getChildren().addAll(listContainer);
 
 
-
-        rootLayout.getChildren().addAll(videoContainer, chatContainer);
+        videoCallPane.prefWidthProperty().bind(rootLayout.widthProperty().multiply(0.7));
+        rightContainer.prefWidthProperty().bind(rootLayout.widthProperty().multiply(0.3));
+        rootLayout.getChildren().addAll(videoContainer, rightContainer);
         this.getChildren().add(rootLayout);
+    }
+
+    private void getParticipants() {
+        participants.add(new Participant("Alice", "/images/avatar3.jpg", "Host", false, false));
+        participants.add(new Participant("Le Thu Hien", "/images/avatar3.jpg", "Member", false, false));
+        participants.add(new Participant("Nguyen Huu Quynh Anh", "/images/avatar3.jpg", "Member", false, false));
     }
 
     private VBox styleControlBox(String iconPath, String label) {

@@ -128,7 +128,7 @@ public class PersonalProfile extends StackPane{
             fullnameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
 
             // Username
-            usernameLabel = new Label("_" + user.getUsername() + "_");
+            usernameLabel = new Label("_" + user.getAccountName() + "_");
             usernameLabel.setFont(Font.font("Arial", 14));
             usernameLabel.setTextFill(Color.GRAY);
             usernameLabel.setPadding(new Insets(0, 0, 20, 0));

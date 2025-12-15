@@ -30,8 +30,8 @@ public class UserDAO {
 
     // Add a user to database
     public void addUser(User user) {
-               Document doc = new Document("account_name", user.getAccount_name())
-                .append("full_name", user.getFull_name())
+               Document doc = new Document("account_name", user.getAccountName())
+                .append("full_name", user.getFullName())
                 .append("email", user.getEmail())
                 .append("password", user.getPassword())
                 .append("role", user.getRole());
@@ -52,7 +52,7 @@ public class UserDAO {
 //                doc.getString("role")
 //        );
         User user = new User(
-                doc.getString("username"),
+                doc.getString("accountName"),
                 doc.getString("fullName"),       // fullname
                 doc.getString("email"),
                 doc.getString("password"),
@@ -87,6 +87,4 @@ public class UserDAO {
     public void updatePassword(String email, String newHashedPassword) {
         users.updateOne(eq("email", email), new Document("$set", new Document("password", newHashedPassword)));
     }
-
-
 }
