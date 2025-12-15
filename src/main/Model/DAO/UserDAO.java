@@ -25,10 +25,10 @@ public class UserDAO {
         return document != null;
     }
 
-
     // Add a user to database
     public void addUser(User user) {
-               Document doc = new Document("username", user.getUsername())
+               Document doc = new Document("account_name", user.getAccount_name())
+                .append("full_name", user.getFull_name())
                 .append("email", user.getEmail())
                 .append("password", user.getPassword())
                 .append("role", user.getRole());
