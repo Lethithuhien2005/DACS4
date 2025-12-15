@@ -20,6 +20,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import main.Controller.UserController;
 import main.Model.PasswordUtils;
+import main.util.Session;
 import org.bson.Document;
 
 
@@ -171,17 +172,21 @@ public class LogIn extends Application {
             UserController userController = new UserController();
             String res = userController.login(emailText, passwordText);
             if (res.equals("SUCCESS")) {
+                Session.getInstance().setEmail(emailText);
+
                 System.out.println("Log in successfully!");
+                System.out.println("Logged in as: " + Session.getInstance().getEmail());
+
                 // Convert to homepage
                 Dashboard dashboard = new Dashboard();
                 Stage dashboardStage = new Stage();
                 try {
                     dashboard.start(dashboardStage);
-                    dashboardStage.close();
+//                    dashboardStage.close();
                 } catch (Exception ex) {
                    ex.printStackTrace();
                 }
-
+                stage.close();
             } else {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setHeaderText(null);

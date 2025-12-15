@@ -46,4 +46,16 @@ public class UserController {
 
         return "SUCCESS";
     }
+    public User getUserProfile(String email) {
+        return userDAO.getUserByEmail(email);
+    }
+
+    public boolean updateUserProfile(User user) {
+        return userDAO.updateUser(user);
+    }
+
+    public void updateUserPassword(User user) {
+        userDAO.updatePassword(user.getEmail(), user.getPassword());
+    }
+
 }

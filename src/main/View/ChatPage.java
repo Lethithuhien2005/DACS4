@@ -4,6 +4,7 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
@@ -22,6 +23,12 @@ import javafx.stage.Stage;
 
 public class ChatPage extends StackPane {
     private StackPane contentPane;
+    private Stage stage; // thêm biến stage
+
+//    public ChatPage(Stage stage, StackPane contentPane) {
+//        this.stage = stage;
+//        this.contentPane = contentPane;
+//    }
 
     public ChatPage(StackPane contentPane) {
         this.contentPane = contentPane;
@@ -501,7 +508,7 @@ public class ChatPage extends StackPane {
             if (newSel != null) {
                 isGroup = false;
                 updateChatHeader(newSel);
-                updateShowMorePanel(newSel); // 🔑 cập nhật panel
+                updateShowMorePanel(newSel); // cập nhật panel
                 chatVBox.getChildren().clear();
             }
         });
@@ -510,7 +517,7 @@ public class ChatPage extends StackPane {
             if (newSel != null) {
                 isGroup=true;
                 updateChatHeader(newSel);
-                updateShowMorePanel(newSel); // 🔑 cập nhật panel
+                updateShowMorePanel(newSel);
                 chatVBox.getChildren().clear();
             }
         });
@@ -608,6 +615,25 @@ public class ChatPage extends StackPane {
             -fx-background-radius: 50; 
             -fx-cursor: hand;
         """);
+
+
+        viewProf.setOnAction(e -> {
+            String selectedName = chatHeaderName.getText();
+            Image selectedAvatar = chatHeaderAvatar.getImage(); // <<< lấy avatar hiện t
+
+//            ProfilePage profilePage = new ProfilePage(stage, selectedName, selectedAvatar);
+//
+//            Stage profileStage = new Stage();  // tạo stage mới
+//            profilePage.start(profileStage);
+//            stage.hide();
+            // Tạo ProfilePage mới
+            ProfilePage profilePage = new ProfilePage(contentPane, selectedName, selectedAvatar);
+
+            // Thay nội dung trung tâm của Dashboard
+//            contentPane.getChildren().clear();  // xóa nội dung cũ (Chat)
+//            contentPane.getChildren().add(profilePage);  // thêm ProfilePage
+        });
+
         Button notif = createIconButton(notifIcon);
         notif.setPadding(new Insets(10));
         notif.setStyle("""
@@ -849,7 +875,6 @@ public class ChatPage extends StackPane {
 
 
         // ================================= ROOT ==================================
-        //HBox root = new HBox(leftPane, chatArea);
         HBox root = new HBox(leftPane, mainChatContainer);
 
         String scrollMoreStyle = """
