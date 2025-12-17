@@ -1,0 +1,580 @@
+package main.Client.View.meeting;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.scene.shape.Circle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import main.Client.DTO.Participant;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MeetingUI extends StackPane {
+    private HBox rootLayout;            // HBox chia 7:3
+    private VBox videoContainer;   // vùng video
+    private VBox rightContainer;         // vùng chat
+    private List<VideoTile> tiles;
+    private VideoCallPane videoCallPane;
+    ObservableList<Participant> participants = FXCollections.observableArrayList(); // cap nhat giao dien realtime khi co nguoi dung join hoac bi kick
+    private Participant currentUser;
+    private String lastSender = null; // sender cua tin nhan truoc do
+
+
+    public MeetingUI() {
+        currentUser = getCurrentUser();
+
+        rootLayout = new HBox();
+        rootLayout.setSpacing(10);   // nếu bạn muốn khoảng giữa 2 panel
+        rootLayout.setPadding(Insets.EMPTY); // xóa viền trắng
+
+        // Video zone (7 phần)
+        videoContainer = new VBox(10);
+        videoContainer.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-border-radius: 15;");
+        videoContainer.setPadding(new Insets(10));
+        HBox.setHgrow(videoContainer, Priority.ALWAYS);  // toan bo videoContainer chiem toan bo phan ben trai theo chieu ngang
+
+        videoCallPane = new VideoCallPane();
+        tiles = new ArrayList<>();
+
+        // ÉP videoCallPane fill 100% bên trong videoContainer
+        videoCallPane.prefWidthProperty().bind(videoContainer.widthProperty());
+        videoCallPane.prefHeightProperty().bind(videoContainer.heightProperty());
+        videoCallPane.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
+        // Test participants
+        tiles.add(new VideoTile("Alice"));
+        tiles.add(new VideoTile("Bob"));
+        tiles.add(new VideoTile("Charlie"));
+        tiles.add(new VideoTile("Charlie"));
+        tiles.add(new VideoTile("Charlie"));
+
+        videoCallPane.updateLayout(tiles);
+
+        // Cac nut dieu khien
+        HBox controlBar = new HBox(20);
+        controlBar.setPadding(new Insets(10));
+        controlBar.setAlignment(Pos.CENTER);
+        controlBar.setStyle("-fx-background-color: #fff;");
+
+        VBox micBox = styleControlBox("/images/mic_off.png", "Microphone");
+        VBox cameraBox = styleControlBox("/images/camera_off.png", "Camera");
+        VBox raiseBox = styleControlBox("/images/raise_off.png", "Raise");
+
+        VBox reactBox = new VBox(5);
+        reactBox.setAlignment(Pos.CENTER);
+        reactBox.setPadding(new Insets(5));
+        reactBox.setStyle("-fx-background-color: #fff;");
+        ImageView reactImage = new ImageView(new Image(getClass().getResource("/images/like.png").toExternalForm()));
+        reactImage.setFitHeight(28);
+        reactImage.setFitWidth(28);
+        Button reactBtn = new Button();
+        reactBtn.setGraphic(reactImage);
+        reactBtn.setStyle("-fx-background-color: #F6EBFF; -fx-border-radius: 15; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 6, 0.2, 0, 1);");
+        reactBtn.setPrefSize(50, 50);
+        reactBtn.setMinSize(50, 50);
+        reactBtn.setMaxSize(50, 50);
+        Label reactLabel = new Label("Reaction");
+        reactLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
+        reactLabel.setStyle("-fx-text-fill: #000");
+        reactBox.getChildren().addAll(reactBtn, reactLabel);
+
+        VBox leaveBox = new VBox(5);
+        leaveBox.setAlignment(Pos.CENTER);
+        leaveBox.setPadding(new Insets(5));
+        leaveBox.setStyle("-fx-background-color: #fff;");
+        ImageView leaveImage = new ImageView(new Image(getClass().getResource("/images/leave.png").toExternalForm()));
+        leaveImage.setFitHeight(28);
+        leaveImage.setFitWidth(28);
+        Button leaveBtn = new Button();
+        leaveBtn.setGraphic(leaveImage);
+        leaveBtn.setStyle("-fx-background-color: #ef233c; -fx-border-radius: 15; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 6, 0.2, 0, 1);");
+        leaveBtn.setPrefSize(50, 50);
+        leaveBtn.setMinSize(50, 50);
+        leaveBtn.setMaxSize(50, 50);
+        Label leaveLabel = new Label("Leave");
+        leaveLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
+        leaveLabel.setStyle("-fx-text-fill: #000");
+        leaveBox.getChildren().addAll(leaveBtn, leaveLabel);
+
+        controlBar.getChildren().addAll(micBox, cameraBox, raiseBox, reactBox, leaveBox);
+        controlBar.setAlignment(Pos.CENTER);
+
+
+        videoContainer.getChildren().addAll(videoCallPane, controlBar);
+
+        // RIGHT PART (3 phan)
+        rightContainer = new VBox(15);
+
+        // Danh sach nguoi tham gia cuoc hop
+        VBox listContainer = new VBox(5);
+        listContainer.setPadding(new Insets(10));
+        VBox.setMargin(listContainer, new Insets(15, 0, 0, 0));
+
+        // So luong nguoi tham gia
+        HBox numberParticipants = new HBox();
+        numberParticipants.setPadding(new Insets(10));
+        numberParticipants.setStyle("-fx-background-color: #F6EBFF; -fx-background-radius: 15; -fx-border-radius: 15;");
+        numberParticipants.setAlignment(Pos.CENTER_LEFT);
+
+        Label numberLabel = new Label("Participants");
+        numberLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 16));
+        numberLabel.setStyle("-fx-text-fill: #9d4edd");
+        HBox.setMargin(numberLabel, new Insets(0, 10, 0, 10));
+
+        Label numberOfParticipant = new Label("20");
+        numberOfParticipant.setFont(Font.font("Poppins", FontWeight.BOLD, 16));
+        numberOfParticipant.setStyle("-fx-text-fill: #9d4edd");
+
+        ImageView add_participant_image = new ImageView(new Image(getClass().getResource("/images/add_participant.png").toExternalForm()));
+        add_participant_image.setFitWidth(20);
+        add_participant_image.setFitHeight(20);
+        Button addParticipantButton = new Button();
+        addParticipantButton.setGraphic(add_participant_image);
+        addParticipantButton.setPrefSize(24, 24);
+        addParticipantButton.setMinSize(24, 24);
+        addParticipantButton.setMaxSize(24, 24);
+        addParticipantButton.setStyle("-fx-background-color: #F6EBFF");
+        HBox.setMargin(addParticipantButton, new Insets(0, 0, 0, 150));
+
+        addParticipantButton.setOnMouseClicked(e -> {
+
+        });
+
+        // Hien thi danh sach nguoi tham gia
+        VBox listParticipants = new VBox(10);
+        listParticipants.setStyle("-fx-background-color: #fff");
+
+        participants.addListener((ListChangeListener<Participant>) change -> {
+            listParticipants.getChildren().clear();
+            for (Participant p : participants) {
+                HBox row = new HBox(10);
+                row.setPadding(new Insets(5));
+
+                ImageView avatar = new ImageView(new Image(p.getAvatar()));
+                avatar.setFitWidth(40);
+                avatar.setFitHeight(40);
+                avatar.setClip(new Circle(20, 20, 20));
+
+                Label nameLabel = new Label(p.getFullname());
+                nameLabel.setFont(Font.font("Popppins", FontWeight.BOLD, 13));
+                Label roleLabel = new Label();
+                roleLabel.setFont(Font.font("Popppins", FontWeight.BOLD, 13));
+
+                String role = p.getRole();
+
+                if ("admin".equalsIgnoreCase(role)) {
+                    roleLabel.setText("(admin)");
+                }
+                else if ("host".equalsIgnoreCase(role)) {
+                    roleLabel.setText("(host)");
+                }
+                else {
+                    roleLabel.setVisible(false);
+                    roleLabel.setManaged(false); // không chiếm chỗ
+                }
+
+                // Đẩy các button sang lề phải
+                Region spacer = new Region();
+                HBox.setHgrow(spacer, Priority.ALWAYS);
+
+                // button Mic
+                Button micButton = new Button();
+                Button cameraButton = new Button();
+
+                updateMicIcon(micButton, p.isMicOn());
+                updateCameraIcon(cameraButton, p.isCameraOn());
+
+                boolean canControl = canControl(currentUser, p);
+
+                // Click dieu khien mic / camera cua cac thanh vien
+                // == Mic ==
+                micButton.setOnMouseClicked(e -> {
+                    if (!canControl) {
+                        Tooltip noPermissionTooltip = new Tooltip("Only the host or admin has permission");
+                        Tooltip.install(micButton, noPermissionTooltip);
+                        noPermissionTooltip.show(micButton, e.getSceneX(), e.getSceneY());
+                    }
+                    else {
+                        p.setMicOn((!p.isMicOn()));
+                        updateMicIcon(micButton, p.isMicOn());
+                    }
+                });
+
+                // == Camera ==
+                cameraButton.setOnMouseClicked(e -> {
+                    if (!canControl) {
+                        Tooltip noPermissionTooltip = new Tooltip("Only the host or admin has permission");
+                        Tooltip.install(cameraButton, noPermissionTooltip);
+                        noPermissionTooltip.show(cameraButton, e.getSceneX(), e.getSceneY());
+                    }
+                    else {
+                        p.setCameraOn((!p.isCameraOn()));
+                        updateCameraIcon(cameraButton, p.isCameraOn());
+                    }
+                });
+
+                // == Kick == Chi hien thi neu la admin hoac host
+                Button kickButton = new Button();
+                ImageView kickImageView = new ImageView(new Image(getClass().getResource("/images/meeting/kick.png").toExternalForm()));
+                kickImageView.setFitHeight(15);
+                kickImageView.setFitWidth(15);
+                kickButton.setGraphic(kickImageView);
+                kickButton.setStyle("-fx-background-color: #fff");
+                kickButton.setPrefSize(18, 18);
+                kickButton.setMinSize(18, 18);
+                kickButton.setMaxSize(18, 18);
+
+                boolean canKick = canKick(currentUser);
+                if (!canKick) {
+                    kickButton.setVisible(false);
+                    kickButton.setManaged(false); // xoa button ra khoi HBox => khong anh huong den layout cua HBox
+                }
+
+                kickButton.setOnMouseClicked(e -> {
+                    // Kick thanh vien ra khoi cuoc hop
+
+
+                });
+
+                row.getChildren().addAll(avatar, nameLabel, roleLabel, spacer, micButton, cameraButton, kickButton);
+                row.setAlignment(Pos.CENTER_LEFT);
+                listParticipants.getChildren().add(row);
+            }
+        });
+
+        // Lay danh sach nguoi tham gia
+        getParticipants();
+
+        ScrollPane scrollPane = new ScrollPane(listParticipants);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: #fff");
+
+        numberParticipants.getChildren().addAll(numberLabel, numberOfParticipant, addParticipantButton);
+        listContainer.getChildren().addAll(numberParticipants, scrollPane);
+
+        // Chatting trong cuoc hop
+        VBox chatContainer = new VBox(5);
+
+        // Tieu de
+        HBox messageHeader = new HBox();
+        messageHeader.setPadding(new Insets(10));
+        messageHeader.setStyle("-fx-background-color: #F6EBFF; -fx-background-radius: 15; -fx-border-radius: 15;");
+        messageHeader.setAlignment(Pos.CENTER_LEFT);
+        VBox.setMargin(messageHeader, new Insets(0, 10, 0, 10));
+
+        Label title = new Label("Messages");
+        title.setFont(Font.font("Poppins", FontWeight.BOLD, 16));
+        title.setStyle("-fx-text-fill: #9d4edd");
+        HBox.setMargin(title, new Insets(0, 10, 0, 10));
+
+        ImageView chatIcon = new ImageView(new Image(getClass().getResource("/images/meeting/message.png").toExternalForm()));
+        chatIcon.setFitWidth(20);
+        chatIcon.setFitHeight(20);
+
+        // Đẩy icon sang lề phải
+        Region spacer2 = new Region();
+        HBox.setHgrow(spacer2, Priority.ALWAYS);
+
+        messageHeader.getChildren().addAll(title, spacer2, chatIcon);
+
+        // Khu vuc hien thi tin nhan
+        VBox messageList = new VBox(8);
+        messageList.setPadding(new Insets(5));
+        messageList.setStyle("-fx-background-color: #fff");
+
+        // Đoạn này chỉ dùng test UI – sau này xóa
+        // Đoạn này chỉ dùng test UI – sau này xóa
+
+        messageList.getChildren().add(
+                createMessageRow(
+                        "Robert",
+                        "Please turn on your camera guys",
+                        "12:02 pm",
+                        false,
+                        lastSender
+                )
+        );
+        lastSender = "Robert";
+
+        messageList.getChildren().add(
+                createMessageRow(
+                        "You",
+                        "Okey dokey! and please don't forget fill the attendance form",
+                        "12:04 pm",
+                        true,
+                        lastSender
+                )
+        );
+        lastSender = "You";
+
+        messageList.getChildren().add(
+                createMessageRow(
+                        "Natalie",
+                        "Okay!",
+                        "12:05 pm",
+                        false,
+                        lastSender
+                )
+        );
+        lastSender = "Natalie";
+
+        ScrollPane messageScroll = new ScrollPane(messageList);
+        messageScroll.setFitToWidth(true);
+        messageScroll.setPrefHeight(220);
+        messageScroll.setStyle("-fx-background-color: #fff;");
+
+        messageScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        messageScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        // auto scroll xuong cuoi
+        messageList.heightProperty().addListener(
+                (obs, oldVal, newVal) -> messageScroll.setVvalue(1.0)
+        );
+
+        // Gui tin nhan
+        ImageView fileImageView = new ImageView(new Image(getClass().getResource("/images/meeting/file.png").toExternalForm()));
+        fileImageView.setFitWidth(15);
+        fileImageView.setFitHeight(15);
+        Button addFileBtn = new Button();
+        addFileBtn.setGraphic(fileImageView);
+        addFileBtn.setMaxSize(18, 18);
+        addFileBtn.setPrefSize(18, 18);
+        addFileBtn.setMinSize(18, 18);
+        addFileBtn.setStyle("-fx-background-color: #fff; -fx-border-color: #fff;");
+
+        addFileBtn.setOnMouseClicked(e -> {
+
+        });
+
+        TextField messageInput = new TextField();
+        messageInput.setPromptText("Write message here...");
+        messageInput.setPrefHeight(38);
+        messageInput.setStyle("-fx-background-radius: 20; -fx-border-radius: 20; -fx-background-color: #fff;");
+
+        ImageView sendImageView = new ImageView(new Image(getClass().getResource("/images/meeting/send.png").toExternalForm()));
+        sendImageView.setFitHeight(18);
+        sendImageView.setFitWidth(18);
+        Button sendBtn = new Button();
+        sendBtn.setGraphic(sendImageView);
+        sendBtn.setMinSize(18, 18);
+        sendBtn.setMaxSize(18, 18);
+        sendBtn.setPrefSize(18, 18);
+        sendBtn.setStyle(
+                "-fx-background-color: #fff;"
+        );
+        sendBtn.setPrefSize(38, 38);
+        HBox.setMargin(sendBtn, new Insets(0, 10, 0, 0));
+
+        sendBtn.setOnMouseClicked(e -> {
+
+        });
+
+        HBox inputArea = new HBox(8, addFileBtn, messageInput, sendBtn);
+        inputArea.setPadding(new Insets(5, 8, 5, 8));
+        inputArea.setStyle("-fx-background-color: #fff; -fx-background-radius: 20; -fx-border-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 2);");
+        VBox.setMargin(inputArea, new Insets(0, 10, 10, 10));
+        inputArea.setAlignment(Pos.CENTER);
+        HBox.setHgrow(messageInput, Priority.ALWAYS);
+
+        chatContainer.getChildren().addAll(messageHeader, messageScroll, inputArea);
+        VBox.setVgrow(messageScroll, Priority.ALWAYS);
+
+        rightContainer.setStyle("-fx-background-color: #fff; -fx-background-radius: 10; -fx-border-radius: 10;");
+        listContainer.prefHeightProperty().bind(rightContainer.heightProperty().multiply(0.4));
+        chatContainer.prefHeightProperty().bind(rightContainer.heightProperty().multiply(0.6));
+        rightContainer.getChildren().addAll(listContainer, chatContainer);
+
+
+        videoCallPane.prefWidthProperty().bind(rootLayout.widthProperty().multiply(0.7));
+        rightContainer.prefWidthProperty().bind(rootLayout.widthProperty().multiply(0.3));
+        rootLayout.getChildren().addAll(videoContainer, rightContainer);
+        this.getChildren().add(rootLayout);
+    }
+
+    // Dieu khien cac button trong video call
+    private VBox styleControlBox(String iconPath, String label) {
+        Image iconOff = new Image(getClass().getResource(iconPath).toExternalForm());
+        Image iconOn = new Image(getClass().getResource(iconPath.replace("_off.png", "_on.png")).toExternalForm());
+        ImageView imageView = new ImageView(iconOff);
+        imageView.setFitWidth(28);
+        imageView.setFitHeight(28);
+
+        Button buttonItem = new Button();
+        buttonItem.setGraphic(imageView);
+        buttonItem.setPrefSize(50, 50);
+        buttonItem.setMinSize(50, 50);
+        buttonItem.setMaxSize(50, 50);
+        buttonItem.setStyle("-fx-background-color: #F6EBFF; -fx-border-radius: 15; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 6, 0.2, 0, 1);");
+
+        Label labelItem = new Label(label);
+        labelItem.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
+        labelItem.setStyle("-fx-text-fill: #000;");
+
+        // Style VBox
+        VBox box = new VBox(5, buttonItem, labelItem);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(5));
+        box.setStyle("-fx-background-color: #fff;");
+
+        // ---- STATE ----
+        final boolean[] isOn = {false};  // mặc định off
+
+        // ---- Toggle style ----
+        buttonItem.setOnMouseClicked(e -> {
+            isOn[0] = !isOn[0];   // Đổi trạng thái
+
+            if (isOn[0]) {
+                // TURN ON
+                imageView.setImage(iconOn);
+                labelItem.setStyle("-fx-text-fill: #6A00F4;");
+                buttonItem.setStyle(
+                        "-fx-background-color: #E6D4FF; -fx-border-radius: 15; -fx-background-radius: 15;" +
+                                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.20), 8, 0.3, 0, 1);"
+                );
+            } else {
+                // TURN OFF
+                imageView.setImage(iconOff);
+                labelItem.setStyle("-fx-text-fill: #000;");
+                buttonItem.setStyle(
+                        "-fx-background-color: #F6EBFF; -fx-border-radius: 15; -fx-background-radius: 15;" +
+                                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 6, 0.2, 0, 1);"
+                );
+            }
+        });
+
+        return box;
+    }
+
+    private Participant getCurrentUser() {
+        return currentUser = new Participant("Alice", "/images/avatar3.jpg", "host", false, false);
+    }
+
+    private void getParticipants() {
+        participants.add(new Participant("Alice", "/images/avatar3.jpg", "host", false, false));
+        participants.add(new Participant("Le Thu Hien", "/images/avatar3.jpg", "", false, false));
+        participants.add(new Participant("Nguyen Huu Quynh Anh", "/images/avatar3.jpg", "", false, false));
+        participants.add(new Participant("Luffy", "/images/avatar3.jpg", "", true, true));
+    }
+
+    // Kiem tra nguoi dung co quyen dieu khien mic, camera va kick nguoi tham gia
+    private boolean canControl(Participant currentUser, Participant normalParticipant) {
+        if (currentUser == null || normalParticipant == null) {
+            return false;
+        }
+
+        String role = currentUser.getRole(); // admin - host - participant
+
+        return "admin".equalsIgnoreCase(role)
+                || "host".equalsIgnoreCase(role)
+                || currentUser == normalParticipant;  // co the bat/tat chinh minh
+    }
+
+    // Kiem tra nguoi dung co quyen kick thanh vien cuoc hop
+    private boolean canKick(Participant currentUser) {
+        if (currentUser == null) {
+            return false;
+        } else {
+            String role = currentUser.getRole();
+            return "admin".equalsIgnoreCase(role) || "host".equalsIgnoreCase(role);
+        }
+    }
+
+    // Dieu khien mic cua cac thanh vien - admin/host
+    private void updateMicIcon(Button btn, boolean isOn) {
+        String icon = isOn ? "/images/meeting/talking.png" : "/images/meeting/mute.png";
+        ImageView imageView = new ImageView(new Image(getClass().getResource(icon).toExternalForm()));
+        imageView.setFitHeight(15);
+        imageView.setFitWidth(15);
+        btn.setGraphic(imageView);
+        btn.setPrefSize(18, 18);
+        btn.setMinSize(18, 18);
+        btn.setMaxSize(18, 18);
+        btn.setStyle("-fx-background-color: #fff;");
+    }
+
+    // Dieu khien camera cua cac thanh vien
+    private void updateCameraIcon(Button btn, boolean isOn) {
+        String icon = isOn ? "/images/meeting/camera_on.png" : "/images/meeting/camera_off.png";
+        ImageView imageView = new ImageView(new Image(getClass().getResource(icon).toExternalForm()));
+        imageView.setFitHeight(15);
+        imageView.setFitWidth(15);
+        btn.setGraphic(imageView);
+        btn.setPrefSize(18, 18);
+        btn.setMinSize(18, 18);
+        btn.setMaxSize(18, 18);
+        btn.setStyle("-fx-background-color: #fff;");
+    }
+
+    // Thie ke tin nhan kieu bubble
+    private HBox createMessageRow(
+            String sender,
+            String content,
+            String time,
+            boolean isMine,
+            String previousSender
+    ) {
+        boolean showName = !sender.equals(previousSender);
+
+        ImageView avatar = new ImageView(
+                new Image(getClass().getResource(
+                        isMine ? "/images/avatar.jpg" : "/images/avatar4.jpg"
+                ).toExternalForm())
+        );
+        avatar.setFitWidth(32);
+        avatar.setFitHeight(32);
+        avatar.setClip(new Circle(16, 16, 16));
+
+        Label nameLabel = new Label(sender);
+        nameLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #000; -fx-font-weight: bold;");
+        nameLabel.setVisible(showName);
+        nameLabel.setManaged(showName);
+
+        Label msgLabel = new Label(content);
+        msgLabel.setWrapText(true);
+        msgLabel.setMaxWidth(240);
+        msgLabel.setPadding(new Insets(8));
+        msgLabel.setStyle(
+                "-fx-background-radius: 12;" +
+                        (isMine
+                                ? "-fx-background-color: #D9FDD3;"
+                                : "-fx-background-color: #F1F1F1;")
+        );
+
+        Label timeLabel = new Label(time);
+        timeLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #999;");
+
+        VBox bubbleBox;
+
+        if (isMine) {
+            // Name: nằm trên bubble, căn phải
+            nameLabel.setAlignment(Pos.CENTER_RIGHT);
+            nameLabel.setMaxWidth(Double.MAX_VALUE);
+
+            bubbleBox = new VBox(2, nameLabel, msgLabel, timeLabel);
+            bubbleBox.setAlignment(Pos.TOP_RIGHT); // cac thanh phan trong VBOX se can phai
+        } else {
+            bubbleBox = new VBox(2, nameLabel, msgLabel, timeLabel);
+        }
+
+        HBox row = new HBox(8);
+        row.setPadding(new Insets(5));
+
+        // Vi tri tin nhan hien thi doi voi ca nhan va nhung nguoi khac
+        if (isMine) {
+            row.setAlignment(Pos.TOP_RIGHT);
+            row.getChildren().add(bubbleBox);
+        } else {
+            row.setAlignment(Pos.TOP_LEFT);
+            row.getChildren().addAll(avatar, bubbleBox);
+        }
+        return row;
+    }
+}
