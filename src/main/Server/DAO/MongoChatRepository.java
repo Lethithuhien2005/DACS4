@@ -70,12 +70,14 @@ public class MongoChatRepository {
                         .append("conversation_id", convoId)
                         .append("user_id", new ObjectId(userAHex))
                         .append("role", "member")
-                        .append("is_muted", false),
+                        .append("is_muted", true)
+                        .append("is_camera_on", false),
                 new Document("_id", new ObjectId())
                         .append("conversation_id", convoId)
                         .append("user_id", new ObjectId(userBHex))
                         .append("role", "member")
-                        .append("is_muted", false)
+                        .append("is_muted", true)
+                        .append("is_camera_on", false)
         ));
 
         return convoId.toHexString();
@@ -156,7 +158,8 @@ public class MongoChatRepository {
                 .append("conversation_id", convoId)
                 .append("user_id", new ObjectId(creatorHex))
                 .append("role", "leader")
-                .append("is_muted", false));
+                .append("is_muted", true)
+                .append("is_camera_on", false));
 
         if (memberIdsHex != null) {
             for (String uid : memberIdsHex) {
@@ -165,7 +168,8 @@ public class MongoChatRepository {
                         .append("conversation_id", convoId)
                         .append("user_id", new ObjectId(uid))
                         .append("role", "member")
-                        .append("is_muted", false));
+                        .append("is_muted", true)
+                        .append("is_camera_on", false));
             }
         }
 
@@ -211,7 +215,8 @@ public class MongoChatRepository {
                         .append("conversation_id", convoId)
                         .append("user_id", new ObjectId(joinerHex))
                         .append("role", "member")
-                        .append("is_muted", false)
+                        .append("is_muted", true)
+                        .append("is_camera_on", false)
                 ),
                 new com.mongodb.client.model.UpdateOptions().upsert(true)
         );

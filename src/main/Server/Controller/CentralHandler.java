@@ -94,7 +94,8 @@ public class CentralHandler {
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
                 out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
 
-                LoginLogupHandler loginHandler = new LoginLogupHandler();
+                LoginLogupHandler loginLogupHandler = new LoginLogupHandler();
+                MeetingHandler meetingHandler = new MeetingHandler();
 
                 String line;
                 while ((line = in.readLine()) != null) {
@@ -103,7 +104,7 @@ public class CentralHandler {
 
                     if ("LOGIN".equals(type) || "LOGUP".equals(type)) {
                         // LoginLogupHandler se xu ly
-                        Document resp = loginHandler.handle(req);
+                        Document resp = loginLogupHandler.handle(req);
                         send(resp);
                     }
                     else if ("HELLO".equals(type)) handleHello(req);
@@ -112,7 +113,16 @@ public class CentralHandler {
                     else if ("OPEN_GROUP".equals(type)) handleOpenGroup(req);
                     else if ("CREATE_GROUP".equals(type)) handleCreateGroup(req);
                     else if ("LIST_GROUPS".equals(type)) handleListGroups(req);
-                    else send(new Document("type", "ERROR").append("message", "Unknown type: " + type));
+
+                    else if ("CREATE_MEETING".equals(type)) {
+                        // MeetingHandler se xu ly
+                        Document resp = meetingHandler.handleCreateMeeting(req);
+                        send(resp);
+                    }
+                    else if ("JOIN_MEETING".equals(type)) {
+                      // MeetingHandler xu ly
+                      Document resp = meetingHandler.handleJoinMeeting(req);
+                    } else send(new Document("type", "ERROR").append("message", "Unknown type: " + type));
                 }
             }  catch (Exception ex) {
                 ex.printStackTrace();  // ✅ bắt buộc in ra

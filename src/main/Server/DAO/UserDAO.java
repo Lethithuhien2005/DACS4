@@ -39,13 +39,6 @@ public class UserDAO {
                        .append("address", user.getAddress())
                        .append("dob", user.getDob() != null ? java.util.Date.from(user.getDob().atStartOfDay(ZoneId.systemDefault()).toInstant()) : null); // dob// Thêm vào cho thông tin address
                 users.insertOne(doc);
-
-//               Document doc = new Document("account_name", user.getAccountName())
-//                .append("full_name", user.getFullName())
-//                .append("email", user.getEmail())
-//                .append("password", user.getPassword())
-//                .append("role", user.getRole());
-//        users.insertOne(doc);
     }
 
     // login to app

@@ -1,35 +1,37 @@
 package main.Server.Model; // ENTITIES ÁNH XẠ CSDL
 
+import org.bson.types.ObjectId;
+
 public class Member {
-    private int member_id;
-    private int conversation_id;
-    private String role;
+    private ObjectId memberId;
+    private ObjectId conversation_id;
+    private String role; // host || member || leader (chat group)
     private boolean is_muted;
     private boolean is_camera_on;
 
-    public Member() {}
+    public Member() {
+    }
 
-    public Member(int member_id, int conversation_id, String role, boolean is_muted, boolean is_camera_on) {
-        this.member_id = member_id;
+    public Member(ObjectId conversation_id, String role, boolean is_muted, boolean is_camera_on) {
         this.conversation_id = conversation_id;
         this.role = role;
         this.is_muted = is_muted;
         this.is_camera_on = is_camera_on;
     }
 
-    public int getMember_id() {
-        return member_id;
+    public ObjectId getMemberId() {
+        return memberId;
     }
 
-    public void setMember_id(int member_id) {
-        this.member_id = member_id;
+    public void setMemberId(ObjectId memberId) {
+        this.memberId = memberId;
     }
 
-    public int getConversation_id() {
+    public ObjectId getConversation_id() {
         return conversation_id;
     }
 
-    public void setConversation_id(int conversation_id) {
+    public void setConversation_id(ObjectId conversation_id) {
         this.conversation_id = conversation_id;
     }
 

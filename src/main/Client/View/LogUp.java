@@ -21,7 +21,7 @@ public class LogUp extends Application {
     double fieldWidth = 320;
     double fieldHeight = 50;
 
-    private LogupController controller = new LogupController(this)
+    private LogupController controller = new LogupController(this);
     private Stage currentStage;;
     private TextField nameTextField;
     private TextField fullnameTextField;
@@ -219,8 +219,7 @@ public class LogUp extends Application {
 //            }
 //        });
 
-        signUpBtn.setOnAction(e -> controller.onClickLogup());
-
+//        signUpBtn.setOnAction(e -> controller.onClickLogup());
 
         // Keep the same size for email, password and button when window change size
         signUpBtn.prefWidthProperty().bind(email.widthProperty());

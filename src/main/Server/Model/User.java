@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.util.Date;
 
 public class User {
-    private int user_id;
+    private ObjectId userId;
     private String username;
     private String fullName;
     private String avatar;
@@ -21,7 +21,6 @@ public class User {
     private Date updatedAt;
     private Date createdAt;
 
-    private ObjectId userId;  // hoặc _id
     public String getUserIdHex() {
         return userId == null ? null : userId.toHexString();
     }
@@ -62,14 +61,6 @@ public class User {
     }
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public int getUser_id() {
-        return user_id;
-    }
-
-    public void setUser_id(int user_id) {
-        this.user_id = user_id;
     }
 
     public String getFullName() {

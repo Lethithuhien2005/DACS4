@@ -23,7 +23,7 @@ public class SocketClient {
         return instance;
     }
 
-    // CONNECT 1 LẦN DUY NHẤT
+    // CONNECT TCP 1 LẦN DUY NHẤT
     public synchronized void connect(String host, int port) throws IOException {
         if (connected) return;
 

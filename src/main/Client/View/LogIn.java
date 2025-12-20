@@ -218,6 +218,7 @@ public class LogIn extends Application {
     public String getPassword() {
         return password.getText().trim();
     }
+
     public void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setHeaderText(null);

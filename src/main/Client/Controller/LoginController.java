@@ -47,7 +47,7 @@ public class LoginController {
 
                 // Neu login thanh cong
                 if ("LOGIN_OK".equals(type)) {
-                    String userIdHex = response.getString("userIdHex"); // Lay userIdHex de luu session
+                    String userIdHex = response.getString("userIdHex"); // Lay userIdHex tu server de luu session
                     Session.getInstance().setUser(email, userIdHex);
 
                     // Goi HELLO toi server chat
@@ -64,7 +64,7 @@ public class LoginController {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> logInView.showError("Lỗi kết nối server!"));
+                Platform.runLater(() -> logInView.showError("TCP not connected!"));
             }
         }).start();
     }

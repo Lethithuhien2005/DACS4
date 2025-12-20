@@ -11,15 +11,28 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Popup;
+import main.Client.Controller.LoginController;
+import main.Client.Controller.MeetingController;
 import main.Client.DTO.Meeting;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
 public class Home extends StackPane {
+    public PasswordField passwordRoom;
+    public TextField idTextField;
+    public TextField titleTextField;
+    public PasswordField passwordMeeting;
     private StackPane contentPane;
     double fieldHeight = 40;
+    private VBox noMeetingBox;
+    private GridPane meetingTodayContainer;
+    private Image noMeetingImage;
+
+    private MeetingController meetingController = new MeetingController(this);
 
     public Home(StackPane contentPane) {
         this.contentPane = contentPane;
@@ -133,7 +146,8 @@ public class Home extends StackPane {
         Label titleMeetingLabel = new Label("Give your meeting a title");
         titleMeetingLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
         titleMeetingLabel.setPadding(new Insets(10, 0, 8, 10));
-        TextField titleTextField = new TextField();
+
+        titleTextField = new TextField();
         titleTextField.setPromptText("What's this meeting about?");
         titleTextField.setFont(Font.font("Poppins", FontWeight.NORMAL, 13));
         titleTextField.setPrefHeight(fieldHeight);
@@ -141,7 +155,8 @@ public class Home extends StackPane {
         Label passwordLabel = new Label("Make it secure (Optional)");
         passwordLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
         passwordLabel.setPadding(new Insets(10, 0, 8, 10));
-        PasswordField passwordMeeting = new PasswordField();
+
+        passwordMeeting = new PasswordField();
         passwordMeeting.setFont(Font.font("Poppins", FontWeight.NORMAL, 13));
         passwordMeeting.setPromptText("Enter a password meeting");
         passwordMeeting.setPrefHeight(fieldHeight);
@@ -215,6 +230,9 @@ public class Home extends StackPane {
             createMeetingButton.setStyle(BtnStyle);
         });
 
+        createMeetingButton.setOnAction(e -> meetingController.onClickCreatMeeting());
+
+
         VBox.setMargin(createMeetingButton, new Insets(12, 0, 0, 0));
 
         onlineContent.getChildren().addAll(titleMeetingLabel, titleTextField, passwordLabel, passwordMeeting, createMeetingButton);
@@ -229,7 +247,7 @@ public class Home extends StackPane {
         Label joinLabel = new Label("Join a meeting with an ID");
         joinLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
         joinLabel.setPadding(new Insets(10, 0, 8, 10));
-        TextField idTextField = new TextField();
+        idTextField = new TextField();
         idTextField.setFont(Font.font("Poppins", FontWeight.NORMAL, 13));
         idTextField.setPadding(new Insets(10, 0, 8, 10));
         idTextField.setPromptText("Type a meeting ID");
@@ -238,7 +256,7 @@ public class Home extends StackPane {
         Label passRoomIDLabel = new Label("Password meeting (Optional)");
         passRoomIDLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
         passRoomIDLabel.setPadding(new Insets(10, 0, 8, 10));
-        PasswordField passwordRoom = new PasswordField();
+        passwordRoom = new PasswordField();
         passwordRoom.setFont(Font.font("Poppins", FontWeight.NORMAL, 13));
         passwordRoom.setPromptText("Type a meeting passcode");
         passwordRoom.setPrefHeight(fieldHeight);
@@ -269,6 +287,8 @@ public class Home extends StackPane {
         joinButton.setOnMouseExited(e -> {
             joinButton.setStyle(BtnStyle);
         });
+
+        joinButton.setOnAction(e -> meetingController.onClickJoinTheMeeting());
 
         VBox.setMargin(joinButton, new Insets(12, 0, 0, 0));
 
@@ -314,6 +334,8 @@ public class Home extends StackPane {
 
         VBox.setMargin(contentMeeting, new Insets(15, 30, 0, 30));
 
+
+        // Container chính cho các cuộc họp hôm nay
         VBox meetLinks = new VBox();
 
         Label label2 = new Label("Meetings today");
@@ -321,178 +343,195 @@ public class Home extends StackPane {
 
 
         // Neu chua co meeting nao today
-        VBox noMeetingBox = new VBox(12);
-        Image noMeetingImage = new Image(getClass().getResource("/images/empty.png").toExternalForm());
-        ImageView noMeetingImageView = new ImageView(noMeetingImage);
-        noMeetingImageView.setFitHeight(50);
-        noMeetingImageView.setFitWidth(50);
+        noMeetingBox = createNoMeetingBox();
 
-        Label noMeetingLabel = new Label("No meetings found. Create one to get started!");
-        noMeetingLabel.setFont(Font.font("Poppins", FontWeight.NORMAL, 15));
-        noMeetingLabel.setStyle("-fx-text-fill: gray");
-        noMeetingLabel.setWrapText(true);
-
-
-        noMeetingBox.getChildren().addAll(noMeetingImageView, noMeetingLabel);
-        noMeetingBox.setAlignment(Pos.CENTER);
-        noMeetingBox.setPadding(new Insets(30, 100, 30, 100));
-        noMeetingBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 15;");
 
 
         // Neu co meeting hom nay
-        VBox meetingToday1 = new VBox();
+        // Box chứa danh sách meeting (ban đầu rỗng)
+        meetingTodayContainer = new GridPane();
+        meetingTodayContainer.setHgap(12);
+        meetingTodayContainer.setVgap(12);
+        meetingTodayContainer.setVisible(false);
+        meetingTodayContainer.setManaged(false);  // Khong chiem cho
 
-        // Fontend
-        Label nameMeeting1 = new Label("Emerging Trends in Data & AI Discussion");
-        nameMeeting1.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
+        // 2 cột bằng nhau
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(50);
+        col1.setHgrow(Priority.ALWAYS);
 
-        HBox timeCreateMeeting1 = new HBox(5);
-        ImageView timeImageView1 = new ImageView(new Image(getClass().getResource("/images/calendar_2.png").toExternalForm()));
-        timeImageView1.setFitWidth(20);
-        timeImageView1.setFitHeight(20);
-        Label time1 = new Label("02-12-2025 08:55 AM");
-        time1.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
-        time1.setStyle("-fx-text-fill: gray");
-        timeCreateMeeting1.getChildren().addAll(timeImageView1, time1);
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setPercentWidth(50);
+        col2.setHgrow(Priority.ALWAYS);
 
-        HBox meetingTodayBtnGroup1 = new HBox(5);
-        String btnMeetingTodayStyle = """
-                -fx-background-color: #F2E7FF;
-                -fx-border-raius: 10;
-                -fx-padding: 6 12;
-                -fx-text-fill: #000;
-                -fx-background-radius: 10;
-                -fx-font-size: 15;
-                -fx-font-weight: bold;
-                -fx-graphic-text-gap: 6;
-                -fx-alignment: CENTER;
-                -fx-min-height: 28;
-                """;
+        meetingTodayContainer.getColumnConstraints().addAll(col1, col2);
 
-        String btnMeetingTodayStyleHover = """
-                -fx-background-color: #D6B4FF;
-                -fx-border-raius: 10;
-                -fx-padding: 6 12;
-                -fx-text-fill: #000;
-                -fx-background-radius: 10;
-                -fx-font-size: 15;
-                -fx-font-weight: bold;
-                -fx-graphic-text-gap: 6;
-                -fx-alignment: CENTER;
-                -fx-min-height: 28;
-                """;
+        meetLinks.getChildren().addAll(label2, noMeetingBox, meetingTodayContainer);
 
-        Button joinMeetingBtn1 = new Button("Join now");
-        joinMeetingBtn1.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
-        joinMeetingBtn1.setStyle(btnMeetingTodayStyle);
-        joinMeetingBtn1.setOnMouseEntered(e -> {
-            joinMeetingBtn1.setStyle(btnMeetingTodayStyleHover);
-        });
-        joinMeetingBtn1.setOnMouseExited(e -> {
-            joinMeetingBtn1.setStyle(btnMeetingTodayStyle);
-        });
-
-        Button shareMeetingBtn1 = new Button("Share meeting");
-        shareMeetingBtn1.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
-        shareMeetingBtn1.setStyle(btnMeetingTodayStyle);
-        shareMeetingBtn1.setOnMouseEntered(e -> {
-            shareMeetingBtn1.setStyle(btnMeetingTodayStyleHover);
-        });
-        shareMeetingBtn1.setOnMouseExited(e -> {
-            shareMeetingBtn1.setStyle(btnMeetingTodayStyle);
-        });
-
-        meetingTodayBtnGroup1.getChildren().addAll(joinMeetingBtn1, shareMeetingBtn1);
-
-        joinMeetingBtn1.prefWidthProperty().bind(meetingTodayBtnGroup1.widthProperty().multiply(0.5));
-        meetingToday1.setMaxWidth(Region.USE_PREF_SIZE);
-        shareMeetingBtn1.prefWidthProperty().bind(meetingTodayBtnGroup1.widthProperty().multiply(0.5));
-        meetingToday1.setMaxWidth(Region.USE_PREF_SIZE);
-
-        meetingToday1.getChildren().addAll(nameMeeting1, timeCreateMeeting1, meetingTodayBtnGroup1);
-        meetingToday1.setPadding(new Insets(15));
-        meetingToday1.setStyle("-fx-background-color: #fff;");
-        meetingToday1.setOnMouseEntered(e -> {
-            meetingToday1.setStyle("-fx-background-color: #fff; -fx-background-radius: 7; -fx-border-radius: 7; -fx-border-color: #801AFB;");
-        });
-        meetingToday1.setOnMouseExited(e -> {
-            meetingToday1.setStyle("-fx-background-color: #fff; -fx-background-radius: 7; -fx-border-radius: 7; -fx-border-color: transparent;");
-        });
-        VBox.setMargin(nameMeeting1, new Insets(0, 0, 8, 0));
-        VBox.setMargin(timeCreateMeeting1, new Insets(2, 0, 15, 0));
+        VBox.setMargin(label2, new Insets(25, 0, 15, 30));
+        VBox.setMargin(meetLinks, new Insets(0, 30, 30, 30));
+        leftContainer.getChildren().addAll(welcomeContainer, meetingBox, contentMeeting, meetLinks);
 
 
-        VBox meetingToday2 = new VBox();
-        Label nameMeeting2 = new Label("Data Integration & Transformation planning");
-        nameMeeting2.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
-
-        HBox timeCreateMeeting2 = new HBox(5);
-        ImageView timeImageView2 = new ImageView(new Image(getClass().getResource("/images/calendar_2.png").toExternalForm()));
-        timeImageView2.setFitWidth(20);
-        timeImageView2.setFitHeight(20);
-        Label time2 = new Label("02-12-2025 02:25 PM");
-        time2.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
-        time2.setStyle("-fx-text-fill: gray");
-        timeCreateMeeting2.getChildren().addAll(timeImageView2, time2);
-
-        HBox meetingTodayBtnGroup2 = new HBox(5);
-        Button joinMeetingBtn2 = new Button("Join now");
-        joinMeetingBtn2.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
-        joinMeetingBtn2.setStyle(btnMeetingTodayStyle);
-        joinMeetingBtn2.setOnMouseEntered(e -> {
-            joinMeetingBtn2.setStyle(btnMeetingTodayStyleHover);
-        });
-        joinMeetingBtn2.setOnMouseExited(e -> {
-            joinMeetingBtn2.setStyle(btnMeetingTodayStyle);
-        });
-
-        Button shareMeetingBtn2 = new Button("Share meeting");
-        shareMeetingBtn2.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
-        shareMeetingBtn2.setStyle(btnMeetingTodayStyle);
-        shareMeetingBtn2.setOnMouseEntered(e -> {
-            shareMeetingBtn2.setStyle(btnMeetingTodayStyleHover);
-        });
-        shareMeetingBtn2.setOnMouseExited(e -> {
-            shareMeetingBtn2.setStyle(btnMeetingTodayStyle);
-        });
-
-        meetingTodayBtnGroup2.getChildren().addAll(joinMeetingBtn2, shareMeetingBtn2);
-
-        joinMeetingBtn2.prefWidthProperty().bind(meetingTodayBtnGroup2.widthProperty().multiply(0.5));
-        meetingToday2.setMaxWidth(Region.USE_PREF_SIZE);
-        shareMeetingBtn2.prefWidthProperty().bind(meetingTodayBtnGroup2.widthProperty().multiply(0.5));
-        meetingToday2.setMaxWidth(Region.USE_PREF_SIZE);
-
-        meetingToday2.getChildren().addAll(nameMeeting2, timeCreateMeeting2, meetingTodayBtnGroup2);
-        meetingToday2.setPadding(new Insets(15));
-        meetingToday2.setStyle("-fx-background-color: #fff;");
-        meetingToday2.setOnMouseEntered(e -> {
-            meetingToday2.setStyle("-fx-background-color: #fff; -fx-background-radius: 7; -fx-border-radius: 7; -fx-border-color: #801AFB;");
-        });
-        meetingToday2.setOnMouseExited(e -> {
-            meetingToday2.setStyle("-fx-background-color: #fff; -fx-background-radius: 7; -fx-border-radius: 7; -fx-border-color: transparent;");
-        });
-        VBox.setMargin(nameMeeting1, new Insets(0, 0, 8, 0));
-        VBox.setMargin(timeCreateMeeting1, new Insets(2, 0, 15, 0));
-        VBox.setMargin(nameMeeting2, new Insets(0, 0, 8, 0));
-        VBox.setMargin(timeCreateMeeting2, new Insets(2, 0, 15, 0));
 
 
-//        meetLinks.getChildren().addAll(label2, noMeetingBox); // khi khong co meeting nao
 
-        HBox meetingTodayFontend = new HBox(5);
-        meetingTodayFontend.getChildren().addAll(meetingToday1, meetingToday2);
-        HBox.setHgrow(meetingToday1, Priority.ALWAYS);
-        HBox.setHgrow(meetingToday2, Priority.ALWAYS);
 
-        meetLinks.getChildren().addAll(label2, meetingTodayFontend);
+
+
+
+
+
+
+//        VBox meetingToday1 = new VBox();
+//
+//        // Fontend
+//        Label nameMeeting1 = new Label("Emerging Trends in Data & AI Discussion");
+//        nameMeeting1.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
+//
+//        HBox timeCreateMeeting1 = new HBox(5);
+//        ImageView timeImageView1 = new ImageView(new Image(getClass().getResource("/images/calendar_2.png").toExternalForm()));
+//        timeImageView1.setFitWidth(20);
+//        timeImageView1.setFitHeight(20);
+//        Label time1 = new Label("02-12-2025 08:55 AM");
+//        time1.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
+//        time1.setStyle("-fx-text-fill: gray");
+//        timeCreateMeeting1.getChildren().addAll(timeImageView1, time1);
+//
+//        HBox meetingTodayBtnGroup1 = new HBox(5);
+//        String btnMeetingTodayStyle = """
+//                -fx-background-color: #F2E7FF;
+//                -fx-border-raius: 10;
+//                -fx-padding: 6 12;
+//                -fx-text-fill: #000;
+//                -fx-background-radius: 10;
+//                -fx-font-size: 15;
+//                -fx-font-weight: bold;
+//                -fx-graphic-text-gap: 6;
+//                -fx-alignment: CENTER;
+//                -fx-min-height: 28;
+//                """;
+//
+//        String btnMeetingTodayStyleHover = """
+//                -fx-background-color: #D6B4FF;
+//                -fx-border-raius: 10;
+//                -fx-padding: 6 12;
+//                -fx-text-fill: #000;
+//                -fx-background-radius: 10;
+//                -fx-font-size: 15;
+//                -fx-font-weight: bold;
+//                -fx-graphic-text-gap: 6;
+//                -fx-alignment: CENTER;
+//                -fx-min-height: 28;
+//                """;
+//
+//        Button joinMeetingBtn1 = new Button("Join now");
+//        joinMeetingBtn1.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
+//        joinMeetingBtn1.setStyle(btnMeetingTodayStyle);
+//        joinMeetingBtn1.setOnMouseEntered(e -> {
+//            joinMeetingBtn1.setStyle(btnMeetingTodayStyleHover);
+//        });
+//        joinMeetingBtn1.setOnMouseExited(e -> {
+//            joinMeetingBtn1.setStyle(btnMeetingTodayStyle);
+//        });
+//
+//        Button shareMeetingBtn1 = new Button("Share meeting");
+//        shareMeetingBtn1.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
+//        shareMeetingBtn1.setStyle(btnMeetingTodayStyle);
+//        shareMeetingBtn1.setOnMouseEntered(e -> {
+//            shareMeetingBtn1.setStyle(btnMeetingTodayStyleHover);
+//        });
+//        shareMeetingBtn1.setOnMouseExited(e -> {
+//            shareMeetingBtn1.setStyle(btnMeetingTodayStyle);
+//        });
+//
+//        meetingTodayBtnGroup1.getChildren().addAll(joinMeetingBtn1, shareMeetingBtn1);
+//
+//        joinMeetingBtn1.prefWidthProperty().bind(meetingTodayBtnGroup1.widthProperty().multiply(0.5));
+//        meetingToday1.setMaxWidth(Region.USE_PREF_SIZE);
+//        shareMeetingBtn1.prefWidthProperty().bind(meetingTodayBtnGroup1.widthProperty().multiply(0.5));
+//        meetingToday1.setMaxWidth(Region.USE_PREF_SIZE);
+//
+//        meetingToday1.getChildren().addAll(nameMeeting1, timeCreateMeeting1, meetingTodayBtnGroup1);
+//        meetingToday1.setPadding(new Insets(15));
+//        meetingToday1.setStyle("-fx-background-color: #fff;");
+//        meetingToday1.setOnMouseEntered(e -> {
+//            meetingToday1.setStyle("-fx-background-color: #fff; -fx-background-radius: 7; -fx-border-radius: 7; -fx-border-color: #801AFB;");
+//        });
+//        meetingToday1.setOnMouseExited(e -> {
+//            meetingToday1.setStyle("-fx-background-color: #fff; -fx-background-radius: 7; -fx-border-radius: 7; -fx-border-color: transparent;");
+//        });
+//        VBox.setMargin(nameMeeting1, new Insets(0, 0, 8, 0));
+//        VBox.setMargin(timeCreateMeeting1, new Insets(2, 0, 15, 0));
+//
+//
+//        VBox meetingToday2 = new VBox();
+//        Label nameMeeting2 = new Label("Data Integration & Transformation planning");
+//        nameMeeting2.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
+//
+//        HBox timeCreateMeeting2 = new HBox(5);
+//        ImageView timeImageView2 = new ImageView(new Image(getClass().getResource("/images/calendar_2.png").toExternalForm()));
+//        timeImageView2.setFitWidth(20);
+//        timeImageView2.setFitHeight(20);
+//        Label time2 = new Label("02-12-2025 02:25 PM");
+//        time2.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
+//        time2.setStyle("-fx-text-fill: gray");
+//        timeCreateMeeting2.getChildren().addAll(timeImageView2, time2);
+//
+//        HBox meetingTodayBtnGroup2 = new HBox(5);
+//        Button joinMeetingBtn2 = new Button("Join now");
+//        joinMeetingBtn2.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
+//        joinMeetingBtn2.setStyle(btnMeetingTodayStyle);
+//        joinMeetingBtn2.setOnMouseEntered(e -> {
+//            joinMeetingBtn2.setStyle(btnMeetingTodayStyleHover);
+//        });
+//        joinMeetingBtn2.setOnMouseExited(e -> {
+//            joinMeetingBtn2.setStyle(btnMeetingTodayStyle);
+//        });
+//
+//        Button shareMeetingBtn2 = new Button("Share meeting");
+//        shareMeetingBtn2.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
+//        shareMeetingBtn2.setStyle(btnMeetingTodayStyle);
+//        shareMeetingBtn2.setOnMouseEntered(e -> {
+//            shareMeetingBtn2.setStyle(btnMeetingTodayStyleHover);
+//        });
+//        shareMeetingBtn2.setOnMouseExited(e -> {
+//            shareMeetingBtn2.setStyle(btnMeetingTodayStyle);
+//        });
+//
+//        meetingTodayBtnGroup2.getChildren().addAll(joinMeetingBtn2, shareMeetingBtn2);
+//
+//        joinMeetingBtn2.prefWidthProperty().bind(meetingTodayBtnGroup2.widthProperty().multiply(0.5));
+//        meetingToday2.setMaxWidth(Region.USE_PREF_SIZE);
+//        shareMeetingBtn2.prefWidthProperty().bind(meetingTodayBtnGroup2.widthProperty().multiply(0.5));
+//        meetingToday2.setMaxWidth(Region.USE_PREF_SIZE);
+//
+//        meetingToday2.getChildren().addAll(nameMeeting2, timeCreateMeeting2, meetingTodayBtnGroup2);
+//        meetingToday2.setPadding(new Insets(15));
+//        meetingToday2.setStyle("-fx-background-color: #fff;");
+//        meetingToday2.setOnMouseEntered(e -> {
+//            meetingToday2.setStyle("-fx-background-color: #fff; -fx-background-radius: 7; -fx-border-radius: 7; -fx-border-color: #801AFB;");
+//        });
+//        meetingToday2.setOnMouseExited(e -> {
+//            meetingToday2.setStyle("-fx-background-color: #fff; -fx-background-radius: 7; -fx-border-radius: 7; -fx-border-color: transparent;");
+//        });
+//        VBox.setMargin(nameMeeting1, new Insets(0, 0, 8, 0));
+//        VBox.setMargin(timeCreateMeeting1, new Insets(2, 0, 15, 0));
+//        VBox.setMargin(nameMeeting2, new Insets(0, 0, 8, 0));
+//        VBox.setMargin(timeCreateMeeting2, new Insets(2, 0, 15, 0));
+//
+//
+//        HBox meetingTodayFontend = new HBox(5);
+//        meetingTodayFontend.getChildren().addAll(meetingToday1, meetingToday2);
+//        HBox.setHgrow(meetingToday1, Priority.ALWAYS);
+//        HBox.setHgrow(meetingToday2, Priority.ALWAYS);
+//
+//        meetLinks.getChildren().addAll(label2, meetingTodayFontend);
 
 //        meetingToday.prefWidthProperty().bind(meetingBox.widthProperty().multiply(0.5));
 //        meetingToday.setMaxWidth(Region.USE_PREF_SIZE); // Giữ đúng width theo prefWidth
-        VBox.setMargin(label2, new Insets(25, 0, 15, 30));
-        VBox.setMargin(meetLinks, new Insets(0, 30, 30, 30));
 
-        leftContainer.getChildren().addAll(welcomeContainer, meetingBox, contentMeeting, meetLinks);
+
 
         // Right part
 
@@ -574,7 +613,7 @@ public class Home extends StackPane {
         Label label3 = new Label("Recent meetings");
         label3.setFont(Font.font("Poppins", FontWeight.BOLD, 20));
 
-        List<Meeting> meetings = Arrays.asList(
+        List<Meeting> recentMeetings = Arrays.asList(
                 new Meeting(
                         "Software Quality Assessment and Improvement",
                         "25-11-2025 02:25 PM",
@@ -603,7 +642,7 @@ public class Home extends StackPane {
 
         VBox meetingListContainer = new VBox(15);
         meetingListContainer.setStyle("-fx-background-color: #fff");
-        if (meetings.isEmpty()) {
+        if (recentMeetings.isEmpty()) {
             VBox noRecentMeetingBox = new VBox(12);
             Image noRecentMeetingImage = new Image(getClass().getResource("/images/empty_box.png").toExternalForm());
             ImageView noRecentMeetingImageView = new ImageView(noRecentMeetingImage);
@@ -616,15 +655,15 @@ public class Home extends StackPane {
             noRecentMeetingLabel.setWrapText(true);
             noRecentMeetingLabel.prefWidthProperty().bind(recentMeetinContainer.widthProperty());
 
-            noRecentMeetingBox.getChildren().addAll(noMeetingImageView, noMeetingLabel);
+            noRecentMeetingBox.getChildren().addAll(noRecentMeetingImageView, noRecentMeetingImageView);
             noRecentMeetingBox.setAlignment(Pos.CENTER);
             noRecentMeetingBox.setPadding(new Insets(30, 100, 30, 100));
             noRecentMeetingBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 15;");
 
             meetingListContainer.getChildren().add(noRecentMeetingBox);
         }
-        for (Meeting m : meetings) {
-            meetingListContainer.getChildren().add(createMeetingItem(m));
+        for (Meeting m : recentMeetings) {
+            meetingListContainer.getChildren().add(createRecentMeetingItem(m));
         }
 
         ScrollPane scroll = new ScrollPane(meetingListContainer);
@@ -691,14 +730,129 @@ public class Home extends StackPane {
         });
     }
 
-    private VBox createMeetingItem(Meeting meeting) {
+    private VBox createNoMeetingBox() {
+        VBox noMeetingBox = new VBox(12);
+        noMeetingImage = new Image(getClass().getResource("/images/empty.png").toExternalForm());
+        ImageView noMeetingImageView = new ImageView(noMeetingImage);
+        noMeetingImageView.setFitHeight(50);
+        noMeetingImageView.setFitWidth(50);
 
+        Label noMeetingLabel = new Label("No meetings found. Create one to get started!");
+        noMeetingLabel.setFont(Font.font("Poppins", FontWeight.NORMAL, 15));
+        noMeetingLabel.setStyle("-fx-text-fill: gray");
+        noMeetingLabel.setWrapText(true);
+
+
+        noMeetingBox.getChildren().addAll(noMeetingImageView, noMeetingLabel);
+        noMeetingBox.setAlignment(Pos.CENTER);
+        noMeetingBox.setPadding(new Insets(30, 100, 30, 100));
+        noMeetingBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 15;");
+
+        return noMeetingBox;
+    }
+
+    public void addMeetingToday(String title, long timestamp) {
+        //  Lần đầu tiên có meeting
+        if (meetingTodayContainer.getChildren().isEmpty()) {
+            noMeetingBox.setVisible(false);
+            noMeetingBox.setManaged(false);
+
+            meetingTodayContainer.setVisible(true);
+            meetingTodayContainer.setManaged(true);
+        }
+
+        VBox meetingBox = createMeetingBox(title, timestamp);
+        meetingTodayContainer.getChildren().add(meetingBox);
+    }
+
+    // Tao UI cho 1 item meeting today
+    private VBox createMeetingBox(String title, long timestamp) {
+        VBox meetingBox = new VBox(10);
+        meetingBox.setPadding(new Insets(15));
+        meetingBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 7;");
+
+        Label name = new Label(title);
+        name.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
+
+        Date date = new Date(timestamp);
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy hh:mm a");
+
+        HBox timeBox = new HBox(5);
+        ImageView icon = new ImageView(
+                new Image(getClass().getResource("/images/calendar_2.png").toExternalForm())
+        );
+        icon.setFitWidth(20);
+        icon.setFitHeight(20);
+
+        Label timeLabel = new Label(sdf.format(date));
+        timeLabel.setStyle("-fx-text-fill: gray;");
+        timeBox.getChildren().addAll(icon, timeLabel);
+
+        HBox btnBox = new HBox(5);
+        Button join = new Button("Join now");
+        Button share = new Button("Share meeting");
+
+        String btnMeetingTodayStyle = """
+                -fx-background-color: #F2E7FF;
+                -fx-border-raius: 10;
+                -fx-padding: 6 12;
+                -fx-text-fill: #000;
+                -fx-background-radius: 10;
+                -fx-font-size: 15;
+                -fx-font-weight: bold;
+                -fx-graphic-text-gap: 6;
+                -fx-alignment: CENTER;
+                -fx-min-height: 28;
+                """;
+
+        String btnMeetingTodayStyleHover = """
+            -fx-background-color: #D6B4FF;
+            -fx-border-raius: 10;
+            -fx-padding: 6 12;
+            -fx-text-fill: #000;
+            -fx-background-radius: 10;
+            -fx-font-size: 15;
+            -fx-font-weight: bold;
+            -fx-graphic-text-gap: 6;
+            -fx-alignment: CENTER;
+            -fx-min-height: 28;
+            """;
+
+        join.setStyle(btnMeetingTodayStyle);
+        share.setStyle(btnMeetingTodayStyle);
+
+        join.setOnMouseEntered(e -> join.setStyle(btnMeetingTodayStyleHover));
+        join.setOnMouseExited(e -> join.setStyle(btnMeetingTodayStyle));
+        share.setOnMouseEntered(e -> share.setStyle(btnMeetingTodayStyleHover));
+        share.setOnMouseExited(e -> share.setStyle(btnMeetingTodayStyle));
+
+        join.prefWidthProperty().bind(btnBox.widthProperty().multiply(0.5));
+        share.prefWidthProperty().bind(btnBox.widthProperty().multiply(0.5));
+        btnBox.getChildren().addAll(join, share);
+
+        meetingBox.getChildren().addAll(name, timeBox, btnBox);
+        VBox.setMargin(name, new Insets(0, 0, 8, 0));
+        VBox.setMargin(timeBox, new Insets(2, 0, 15, 0));
+
+        meetingBox.setOnMouseEntered(e ->
+                meetingBox.setStyle("-fx-background-color: #fff; -fx-border-color: #801AFB; -fx-border-radius: 7;")
+        );
+        meetingBox.setOnMouseExited(e ->
+                meetingBox.setStyle("-fx-background-color: #fff; -fx-border-color: transparent; -fx-border-radius: 7;")
+        );
+
+        return meetingBox;
+    }
+
+
+    // Tao UI cho 1 item recent meeting
+    private VBox createRecentMeetingItem(Meeting recentMeeting) {
         VBox box = new VBox(8);
         box.setPadding(new Insets(15));
         box.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #ccc; -fx-border-width: 1; -fx-background-color: #fff;");
 
         // Title
-        Label titleLabel = new Label(meeting.getTitle());
+        Label titleLabel = new Label(recentMeeting.getTitle());
         titleLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
         titleLabel.setWrapText(true);
 
@@ -708,19 +862,19 @@ public class Home extends StackPane {
         icon.setFitWidth(20);
         icon.setFitHeight(20);
 
-        Label time = new Label(meeting.getTime());
+        Label time = new Label(recentMeeting.getTime());
         time.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
         time.setStyle("-fx-text-fill: gray");
         timeBox.getChildren().addAll(icon, time);
 
         // Host
         HBox hostBox = new HBox(10);
-        ImageView avatar = new ImageView(new Image(getClass().getResource(meeting.getAvatarPath()).toExternalForm()));
+        ImageView avatar = new ImageView(new Image(getClass().getResource(recentMeeting.getAvatarPath()).toExternalForm()));
         avatar.setFitWidth(24);
         avatar.setFitHeight(24);
         avatar.setClip(new Circle(12, 12, 12));
 
-        Label host = new Label(meeting.getHostName());
+        Label host = new Label(recentMeeting.getHostName());
         host.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
         host.setStyle("-fx-text-fill: gray");
         hostBox.getChildren().addAll(avatar, host);
@@ -730,5 +884,7 @@ public class Home extends StackPane {
 
         return box;
     }
+
+
 
 }
