@@ -71,6 +71,8 @@ public class ChatPage extends StackPane {
             throw new RuntimeException("currentUser.userId is null - kiểm tra UserController có set userId từ MongoDB chưa");
         }
         System.out.println("Current user hex: " + this.myIdHex);
+
+
         chatClient.setListener(new ChatClient.Listener() {
 //            @Override
 //            public void onOpenPrivateOk(String conversationId, String withUserId, java.util.List<org.bson.Document> messages) {
@@ -88,6 +90,7 @@ public class ChatPage extends StackPane {
             public void onHelloOk() {
                 // sau khi HELLO_OK về => an toàn gọi listGroups
                 chatClient.listGroups();
+
             }
             @Override
             public void onListGroupsOk(java.util.List<org.bson.Document> groups) {
@@ -165,6 +168,8 @@ public class ChatPage extends StackPane {
                 System.out.println("TCP ERROR: " + message);
             }
         });
+        chatClient.listGroups();
+
         // KHÔNG connect trực tiếp trên UI theard (đỡ đứng app)
 //        new Thread(() -> {
 //            try {
@@ -609,14 +614,6 @@ public class ChatPage extends StackPane {
         TextField inputField = new TextField();
         inputField.setPromptText("Type your message here...");
         inputField.setPrefHeight(40);
-//        inputField.setStyle("""
-//            -fx-background-radius: 20;
-//            -fx-border-radius: 20;
-//            -fx-border-color: #8b008b;
-//            -fx-border-width: 1;
-//            -fx-padding: 0 15 0 15;
-//        """);
-        // Style mặc định
         String normalStyle = """
             -fx-background-color: white;
             -fx-background-radius: 20;
@@ -674,11 +671,7 @@ public class ChatPage extends StackPane {
         });
 
         sendBtn.setOnAction(e -> {
-//            String text = inputField.getText().trim();
-//            if(!text.isEmpty()){
-//                addMessage(text, true); // true = của mình
-//                inputField.clear();
-//            }
+
             String text = inputField.getText().trim();
             if (text.isEmpty()) return;
 
@@ -1393,6 +1386,9 @@ public class ChatPage extends StackPane {
         }
 
         chatVBox.getChildren().add(msgHBox);
+
+        Platform.runLater(() -> scrollPane.setVvalue(1.0));
+
         scrollPane.layout();
         scrollPane.setVvalue(1.0); // cuộn xuống cuối
     }

@@ -28,7 +28,20 @@ public class MeetingUI extends StackPane {
     private String lastSender = null; // sender cua tin nhan truoc do
 
 
+    private StackPane contentPane;
+
+    public MeetingUI(StackPane contentPane) {
+        this.contentPane = contentPane;
+        initUI();
+    }
+
+    // Giữ constructor cũ nếu cần
     public MeetingUI() {
+        initUI();
+    }
+
+//    public MeetingUI() {
+    private void initUI() {
         currentUser = getCurrentUser();
 
         rootLayout = new HBox();

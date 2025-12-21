@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import main.Client.View.meeting.MeetingUI;
 
 public class Home extends StackPane {
     public PasswordField passwordRoom;
@@ -32,10 +33,20 @@ public class Home extends StackPane {
     private GridPane meetingTodayContainer;
     private Image noMeetingImage;
 
-    private MeetingController meetingController = new MeetingController(this);
+//    private MeetingController meetingController = new MeetingController(this);
+    private MeetingController meetingController;
+    private MeetingUI meetingUI;
+
+
 
     public Home(StackPane contentPane) {
         this.contentPane = contentPane;
+
+        // 1. Khởi tạo MeetingUI trước
+        this.meetingUI = new MeetingUI(contentPane);
+
+        // 2. Truyền ĐỦ dependency cho Controller
+        this.meetingController = new MeetingController(this, meetingUI);
 
         HBox container = new HBox();
         VBox leftContainer = new VBox();

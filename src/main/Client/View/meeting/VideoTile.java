@@ -26,7 +26,7 @@ public class VideoTile extends StackPane {
         videoView.fitHeightProperty().bind(this.heightProperty());
 
         fakeWebcamImage = new Image(
-                getClass().getResource("/images/video_call.png").toExternalForm()
+                getClass().getResource("/images/video_call.jpg").toExternalForm()
         );
         // mặc định camera ON
         videoView.setImage(fakeWebcamImage);

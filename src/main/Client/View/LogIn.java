@@ -238,7 +238,7 @@ public class LogIn extends Application {
     }
 
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+//    public static void main(String[] args) {
+//        launch(args);
+//    }
 }

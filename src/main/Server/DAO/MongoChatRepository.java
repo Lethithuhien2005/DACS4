@@ -232,6 +232,8 @@ public class MongoChatRepository {
         return (c != null) ? c.getString("type") : null;
     }
     public List<Document> listGroupsForUser(String userIdHex) {
+        System.out.println("LIST_GROUPS requested by " + userIdHex);
+
         ObjectId uid = new ObjectId(userIdHex);
 
         // 1) lấy tất cả conversation_id mà user đang là member
