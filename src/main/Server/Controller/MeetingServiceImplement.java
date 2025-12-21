@@ -13,18 +13,21 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MeetingServiceImplement extends UnicastRemoteObject implements MeetingService {
     private MeetingDAO meetingDAO;
     private UserDAO userDAO;
+    // Luu callback cua tat ca client theo phong (roonID)
+    private Map<String, List<MeetingClientCallback>> roomCallbacks = new HashMap<>();
 
     public MeetingServiceImplement() throws RemoteException {
         super();
         meetingDAO = new MeetingDAO();
         userDAO = new UserDAO();
     }
-
 
     @Override
     public void createMeeting(String hostId, String title, String passcode, MeetingClientCallback callback) throws RemoteException {
@@ -96,6 +99,15 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
             meetingDAO.addParticipant(roomID, userID, role);
         }
 
+        // Luu callback vao roomCallbacks (danh sach callback) de sau nay server thong bao cho cac client trong cung 1 phong
+        // Tao 1 danh sach rong chua callback cua cac client neu phong chua co trong roomCallbacks, neu phong da ton tai trong roomCallbacks thi giu nguyen, khong khi de
+        roomCallbacks.putIfAbsent(roomID.toHexString(), new ArrayList<>()); // Tao danh sach chua cac callback cua cac client trong phong
+        List<MeetingClientCallback> callbacks = roomCallbacks.get(roomID.toHexString());
+        if (!callbacks.contains(callback)) {
+            callbacks.add(callback);
+        }
+
+
         // Lấy danh sách participant dựa trên roomId
         List<Document> participants = meetingDAO.getActiveParticipants(roomID);
         List<Meeting_participantDTO> participantList = new ArrayList<>();
@@ -114,10 +126,59 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
             participantList.add(dto);
         }
         callback.onJoinMeetingSuccess(participantList);
+
+        // Thong bao cho tat ca cac client trong phong
+        notifyUpdatingParticipants(roomID.toHexString());
+    }
+
+    // Cap nhat giao dien danh sach nguoi tham gia cuoc hop cho tat ca cac client khi co 1 client join, leave, mute,...
+    private void notifyUpdatingParticipants(String roomId) throws RemoteException {
+        // Server giu danh sach callback cua moi client trong phong
+        List<MeetingClientCallback> callbacks = roomCallbacks.get(roomId);
+
+        // Lay danh sach cac client dang co trong cuoc hop dua tren roomId
+        List<Document> participants = meetingDAO.getActiveParticipants(new ObjectId(roomId));
+        List<Meeting_participantDTO> participantList = new ArrayList<>();
+        for (Document p : participants) {
+            ObjectId user_id = p.getObjectId("user_id");
+            Document userDoc = userDAO.getUserById(user_id);
+            Meeting_participantDTO dto = new Meeting_participantDTO(
+                    user_id.toHexString(),
+                    userDoc != null ? userDoc.getString("username") : "Unknown",
+                    userDoc != null ? userDoc.getString("fullName") : "Unknown",
+                    userDoc != null ? userDoc.getString("avatar") : "default_avatar",
+                    p.getString("role"),
+                    Boolean.TRUE.equals(p.getBoolean("is_muted")),
+                    Boolean.TRUE.equals(p.getBoolean("is_camera_on"))
+            );
+            participantList.add(dto);
+        }
+        // Gọi callback cho tat ca client de cap nhat giao dien
+        for (MeetingClientCallback c : callbacks) {
+            c.onParticipantListUpdated(participantList);
+        }
     }
 
     @Override
-    public synchronized void leaveMeeting(String userId, String meetingId) throws RemoteException {
+    public synchronized void leaveMeeting(String userId, String meetingCode, MeetingClientCallback callback) throws RemoteException {
+        Document room = meetingDAO.getRoomByMeetingCode(meetingCode);
+        if (room == null) {
+            return;
+        }
+        ObjectId roomId = room.getObjectId("_id");
+        ObjectId userID = new ObjectId(userId);
 
+        // Set trang thai left cho client
+        meetingDAO.updateStatusParticipant(roomId, userID);
+
+        // Xoa callback cua client trong danh sach
+        List<MeetingClientCallback> callbacks = roomCallbacks.get(roomId.toHexString());
+        if (callbacks != null) {
+            callbacks.remove(callback);
+        }
+
+        // Thong bao cho cac client cap nhat giao dien
+        notifyUpdatingParticipants(roomId.toHexString());
     }
+
 }

@@ -54,7 +54,7 @@ public class ClientMain extends Application {
             try {
                 // lookup service
                 Registry registry = LocateRegistry.getRegistry("localhost", 2005);
-                meetingService = (MeetingService) registry.lookup("MeetingService");
+                meetingService = (MeetingService) registry.lookup("BankService");
                 System.out.println("RMI Connected!");
             } catch (Exception e) {
                 e.printStackTrace();

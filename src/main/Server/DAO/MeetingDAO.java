@@ -1,7 +1,8 @@
 package main.Server.DAO;
 
 import com.mongodb.client.MongoCollection;
-import main.Server.Model.Room;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
 import main.util.MongoDBConnection;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -101,5 +102,18 @@ public class MeetingDAO {
         );
     }
 
+    public void updateStatusParticipant(ObjectId roomId, ObjectId userId) {
+        meeting_participants.updateOne(
+                Filters.and(
+                        Filters.eq("room_id", roomId),
+                        Filters.eq("user_id", userId),
+                        Filters.eq("status", "active") // chỉ update nếu đang active
+                ),
+                Updates.combine(
+                        Updates.set("status", "left"),
+                        Updates.set("left_at", System.currentTimeMillis())
+                )
+        );
+    }
 
 }

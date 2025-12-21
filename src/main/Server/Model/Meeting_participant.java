@@ -12,7 +12,5 @@ public class Meeting_participant {
     private String status;
     private String user_id;
     private ObjectId room_id;
-
-
 }
 

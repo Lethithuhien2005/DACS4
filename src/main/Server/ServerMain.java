@@ -18,16 +18,10 @@ public class ServerMain {
         TCPserver.start();
 
         // ket noi RMI
-        new Thread(() -> {
-            try {
-                Registry registry = LocateRegistry.createRegistry(2005);
-                MeetingService meetingServiceSkeleton = new MeetingServiceImplement();
-                registry.rebind("MeetingService", meetingServiceSkeleton);
-                System.out.println("Server RMI is running...");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
+        Registry registry = LocateRegistry.createRegistry(2005);
+        MeetingService meetingServiceSkeleton = new MeetingServiceImplement();
+        registry.rebind("MeetingService", meetingServiceSkeleton);
+        System.out.println("Server RMI is running...");
 
     }
 }
