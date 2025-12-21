@@ -7,6 +7,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 
 import javafx.scene.layout.*;
@@ -650,6 +651,9 @@ public class ChatPage extends StackPane {
             inputField.setScaleY(1);
         });
 
+
+
+
         ImageView sendIcon = new ImageView(new Image("./images/chatPage/send.png", false));
         sendIcon.setFitWidth(28);
         sendIcon.setFitHeight(28);
@@ -657,6 +661,13 @@ public class ChatPage extends StackPane {
         Button sendBtn = new Button();
         sendBtn.setGraphic(sendIcon);
         sendBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
+
+        inputField.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                sendBtn.fire();
+                e.consume(); // chặn hành vi mặc định
+            }
+        });
 
         sendBtn.setOnMouseEntered(e -> {
             sendIcon.setScaleX(0.9);
@@ -1387,10 +1398,17 @@ public class ChatPage extends StackPane {
 
         chatVBox.getChildren().add(msgHBox);
 
-        Platform.runLater(() -> scrollPane.setVvalue(1.0));
+        Platform.runLater(() -> {
+            chatVBox.applyCss();
+            chatVBox.layout();
 
-        scrollPane.layout();
-        scrollPane.setVvalue(1.0); // cuộn xuống cuối
+            scrollPane.setVvalue(1.0);
+        });
+
+//        Platform.runLater(() -> scrollPane.setVvalue(1.0));
+
+//        scrollPane.layout();
+//        scrollPane.setVvalue(1.0); // cuộn xuống cuối
     }
     private void showCreateGroupDialog() {
         Dialog<ButtonType> dialog = new Dialog<>();

@@ -32,7 +32,8 @@ public class SidebarController {
         VBox.setMargin(homeItem, new Insets(30,0,0,0));
 
         VBox meetingItem = createMenuItem("/images/video.png", "Meet",
-                () -> setContent(new MeetingUI()));
+                () -> setContent(new MeetingUI(contentPane)));
+
 
         VBox chattingItem = createMenuItem("/images/chat.png", "Chat",
                 () -> setContent(new ChatPage(contentPane)));

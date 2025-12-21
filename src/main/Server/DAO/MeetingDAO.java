@@ -14,11 +14,13 @@ public class MeetingDAO {
     private MongoCollection<Document> conversations;
     private MongoCollection<Document> rooms;
     private MongoCollection<Document> meeting_participants;
+    private MongoCollection<Document> messages;
 
     public MeetingDAO() {
         conversations = MongoDBConnection.getDatabase().getCollection("conversations");
         rooms = MongoDBConnection.getDatabase().getCollection("rooms");
         meeting_participants = MongoDBConnection.getDatabase().getCollection("meeting_participants");
+        messages = MongoDBConnection.getDatabase().getCollection("messages");
     }
 
     // Add a meeting to database
@@ -94,5 +96,18 @@ public class MeetingDAO {
         );
     }
 
+    public void saveMessage(
+            ObjectId conversationId,
+            String senderId,
+            String content
+    ) {
+        Document doc = new Document()
+                .append("conversation_id", conversationId)
+                .append("sender_id", senderId)
+                .append("content", content)
+                .append("created_at", Date.from(Instant.now()));
+
+        messages.insertOne(doc);
+    }
 
 }
