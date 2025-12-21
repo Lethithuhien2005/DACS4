@@ -13,8 +13,8 @@ public class Room {
     private String meeting_code;
     private String passcode;
     private String status;
-    private Date created_at;
     private ObjectId conservationId;
+    private Date created_at;
 
     public Room(String title, String meeting_code, String passcode, String status, Date created_at, ObjectId conservationId) {
         this.title = title;

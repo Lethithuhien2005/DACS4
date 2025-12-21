@@ -11,8 +11,8 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Popup;
-import main.Client.Controller.LoginController;
 import main.Client.Controller.MeetingController;
+import shared.MeetingService;
 import main.Client.DTO.Meeting;
 
 import java.text.SimpleDateFormat;
@@ -33,9 +33,9 @@ public class Home extends StackPane {
     private GridPane meetingTodayContainer;
     private Image noMeetingImage;
 
-//    private MeetingController meetingController = new MeetingController(this);
     private MeetingController meetingController;
     private MeetingUI meetingUI;
+    private MeetingService meetingService;
 
 
 
@@ -46,7 +46,7 @@ public class Home extends StackPane {
         this.meetingUI = new MeetingUI(contentPane);
 
         // 2. Truyền ĐỦ dependency cho Controller
-        this.meetingController = new MeetingController(this, meetingUI);
+        this.meetingController = new MeetingController(this, meetingUI, meetingService);
 
         HBox container = new HBox();
         VBox leftContainer = new VBox();
@@ -762,7 +762,7 @@ public class Home extends StackPane {
         return noMeetingBox;
     }
 
-    public void addMeetingToday(String title, long timestamp) {
+    public void addMeetingToday(String title, String meetingCode, String passcode, long timestamp) {
         //  Lần đầu tiên có meeting
         if (meetingTodayContainer.getChildren().isEmpty()) {
             noMeetingBox.setVisible(false);
@@ -772,18 +772,40 @@ public class Home extends StackPane {
             meetingTodayContainer.setManaged(true);
         }
 
-        VBox meetingBox = createMeetingBox(title, timestamp);
+        VBox meetingBox = createMeetingBox(title, meetingCode, passcode, timestamp);
         meetingTodayContainer.getChildren().add(meetingBox);
     }
 
     // Tao UI cho 1 item meeting today
-    private VBox createMeetingBox(String title, long timestamp) {
+    private VBox createMeetingBox(String title, String meetingCode, String passcode, long timestamp) {
         VBox meetingBox = new VBox(10);
         meetingBox.setPadding(new Insets(15));
         meetingBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 7;");
 
         Label name = new Label(title);
         name.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
+
+        HBox meetingCodeBox = new HBox(5);
+
+        Label label = new Label("Meeting ID:");
+        label.setFont(Font.font("Poppins", FontWeight.NORMAL, 13));
+        label.setStyle("-fx-text-fill: gray;");
+        Label meetCode = new Label(meetingCode);
+        meetCode.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
+        meetCode.setStyle("-fx-text-fill: gray;");
+
+        // Nếu có passcode, hiển thị ngay cạnh meetingCode
+        Label passCodeLabel = null;
+        if (passcode != null && !passcode.isEmpty()) {
+            passCodeLabel = new Label(" | Passcode: " + passcode);
+            passCodeLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
+            passCodeLabel.setStyle("-fx-text-fill: gray;");
+        }
+
+        meetingCodeBox.getChildren().addAll(label,meetCode);
+        if (passCodeLabel != null) {
+            meetingCodeBox.getChildren().add(passCodeLabel);
+        }
 
         Date date = new Date(timestamp);
         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy hh:mm a");
@@ -841,7 +863,7 @@ public class Home extends StackPane {
         share.prefWidthProperty().bind(btnBox.widthProperty().multiply(0.5));
         btnBox.getChildren().addAll(join, share);
 
-        meetingBox.getChildren().addAll(name, timeBox, btnBox);
+        meetingBox.getChildren().addAll(name, meetingCodeBox, timeBox, btnBox);
         VBox.setMargin(name, new Insets(0, 0, 8, 0));
         VBox.setMargin(timeBox, new Insets(2, 0, 15, 0));
 

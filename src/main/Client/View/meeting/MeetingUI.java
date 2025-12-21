@@ -12,7 +12,7 @@ import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import main.Client.DTO.Participant;
+import shared.DTO.Meeting_participantDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +23,7 @@ public class MeetingUI extends StackPane {
     private VBox rightContainer;         // vùng chat
     private List<VideoTile> tiles;
     private VideoCallPane videoCallPane;
-    ObservableList<Participant> participants = FXCollections.observableArrayList(); // cap nhat giao dien realtime khi co nguoi dung join hoac bi kick
-    private Participant currentUser;
+    private Meeting_participantDTO currentUser;
     private String lastSender = null; // sender cua tin nhan truoc do
 
 
@@ -165,9 +164,9 @@ public class MeetingUI extends StackPane {
         VBox listParticipants = new VBox(10);
         listParticipants.setStyle("-fx-background-color: #fff");
 
-        participants.addListener((ListChangeListener<Participant>) change -> {
+        participants.addListener((ListChangeListener<Meeting_participantDTO>) change -> {
             listParticipants.getChildren().clear();
-            for (Participant p : participants) {
+            for (Meeting_participantDTO p : participants) {
                 HBox row = new HBox(10);
                 row.setPadding(new Insets(5));
 
@@ -176,7 +175,7 @@ public class MeetingUI extends StackPane {
                 avatar.setFitHeight(40);
                 avatar.setClip(new Circle(20, 20, 20));
 
-                Label nameLabel = new Label(p.getFullname());
+                Label nameLabel = new Label(p.getFullName());
                 nameLabel.setFont(Font.font("Popppins", FontWeight.BOLD, 13));
                 Label roleLabel = new Label();
                 roleLabel.setFont(Font.font("Popppins", FontWeight.BOLD, 13));
@@ -202,7 +201,7 @@ public class MeetingUI extends StackPane {
                 Button micButton = new Button();
                 Button cameraButton = new Button();
 
-                updateMicIcon(micButton, p.isMicOn());
+                updateMicIcon(micButton, p.isMuted());
                 updateCameraIcon(cameraButton, p.isCameraOn());
 
                 boolean canControl = canControl(currentUser, p);
@@ -216,8 +215,8 @@ public class MeetingUI extends StackPane {
                         noPermissionTooltip.show(micButton, e.getSceneX(), e.getSceneY());
                     }
                     else {
-                        p.setMicOn((!p.isMicOn()));
-                        updateMicIcon(micButton, p.isMicOn());
+                        p.setMuted((!p.isMuted()));
+                        updateMicIcon(micButton, p.isMuted());
                     }
                 });
 
@@ -465,17 +464,25 @@ public class MeetingUI extends StackPane {
 
         return box;
     }
-
-    private Participant getCurrentUser() {
-        return currentUser = new Participant("Alice", "/images/avatar3.jpg", "host", false, false);
+    public void setCurrentUser(Meeting_participantDTO user) {
+        this.currentUser = user;
     }
 
-    public ObservableList<Participant> getParticipantsList() {
+    private Meeting_participantDTO getCurrentUser() {
+        return currentUser;
+    }
+
+    // cap nhat giao dien realtime khi co nguoi dung join hoac bi kick
+    private ObservableList<Meeting_participantDTO> participants
+            = FXCollections.observableArrayList();
+
+    public ObservableList<Meeting_participantDTO> getParticipantsList() {
         return participants;
     }
 
+
     // Kiem tra nguoi dung co quyen dieu khien mic, camera va kick nguoi tham gia
-    private boolean canControl(Participant currentUser, Participant normalParticipant) {
+    private boolean canControl(Meeting_participantDTO currentUser, Meeting_participantDTO normalParticipant) {
         if (currentUser == null || normalParticipant == null) {
             return false;
         }
@@ -484,11 +491,11 @@ public class MeetingUI extends StackPane {
 
         return "admin".equalsIgnoreCase(role)
                 || "host".equalsIgnoreCase(role)
-                || currentUser == normalParticipant;  // co the bat/tat chinh minh
+                || currentUser.getUserId().equals(normalParticipant.getUserId()); // co the bat/tat chinh minh
     }
 
     // Kiem tra nguoi dung co quyen kick thanh vien cuoc hop
-    private boolean canKick(Participant currentUser) {
+    private boolean canKick(Meeting_participantDTO currentUser) {
         if (currentUser == null) {
             return false;
         } else {

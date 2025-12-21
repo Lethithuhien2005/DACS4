@@ -1,15 +1,33 @@
 package main.Server;
 
 import main.Server.Controller.CentralHandler;
+import main.Server.Controller.MeetingServiceImplement;
 import main.Server.DAO.MongoChatRepository;
+import shared.MeetingService;
+
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 
 public class ServerMain {
     public static void main(String[] args) throws Exception {
         int port = 5555;
 
         MongoChatRepository repo = new MongoChatRepository();
-        CentralHandler server = new CentralHandler(port, repo);
+        // Ket noi tcp
+        CentralHandler TCPserver = new CentralHandler(port, repo);
+        TCPserver.start();
 
-        server.start(); // chặn tại đây
+        // ket noi RMI
+        new Thread(() -> {
+            try {
+                Registry registry = LocateRegistry.createRegistry(2005);
+                MeetingService meetingServiceSkeleton = new MeetingServiceImplement();
+                registry.rebind("MeetingService", meetingServiceSkeleton);
+                System.out.println("Server RMI is running...");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+
     }
 }
