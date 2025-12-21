@@ -5,6 +5,7 @@ import com.mongodb.client.model.Filters;
 import main.Server.Model.User;
 import main.util.MongoDBConnection;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import java.time.ZoneId;
 import java.util.Date;
@@ -104,6 +105,8 @@ public class UserDAO {
         );
     }
 
-
+    public Document getUserById(ObjectId userId) {
+        return users.find(new Document("_id", userId)).first();
+    }
 
 }

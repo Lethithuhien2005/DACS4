@@ -251,7 +251,7 @@ public class MeetingUI extends StackPane {
         });
 
         // Lay danh sach nguoi tham gia
-        getParticipants();
+        getParticipantsList();
 
         ScrollPane scrollPane = new ScrollPane(listParticipants);
         scrollPane.setFitToWidth(true);
@@ -457,11 +457,8 @@ public class MeetingUI extends StackPane {
         return currentUser = new Participant("Alice", "/images/avatar3.jpg", "host", false, false);
     }
 
-    private void getParticipants() {
-        participants.add(new Participant("Alice", "/images/avatar3.jpg", "host", false, false));
-        participants.add(new Participant("Le Thu Hien", "/images/avatar3.jpg", "", false, false));
-        participants.add(new Participant("Nguyen Huu Quynh Anh", "/images/avatar3.jpg", "", false, false));
-        participants.add(new Participant("Luffy", "/images/avatar3.jpg", "", true, true));
+    public ObservableList<Participant> getParticipantsList() {
+        return participants;
     }
 
     // Kiem tra nguoi dung co quyen dieu khien mic, camera va kick nguoi tham gia
@@ -577,4 +574,14 @@ public class MeetingUI extends StackPane {
         }
         return row;
     }
+
+    public List<VideoTile> getTiles() {
+        return tiles;
+    }
+
+    public VideoCallPane getVideoCallPane() {
+        return videoCallPane;
+    }
+
 }
+

@@ -1,16 +1,21 @@
 package main.Server.Controller; // NHẬN REQUEST TỪ CLIENT + XỬ LÝ NGHIỆP VỤ
 
 import main.Server.DAO.MeetingDAO;
+import main.Server.DAO.UserDAO;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class MeetingHandler {
     private MeetingDAO meetingDAO;
+    private UserDAO userDAO;
 
     public MeetingHandler() {
         meetingDAO = new MeetingDAO();
+        userDAO = new UserDAO();
     }
     // Xu ly yeu cau CREATE MEETING
     public Document handleCreateMeeting(Document request) {
@@ -88,18 +93,47 @@ public class MeetingHandler {
             }
 
             // Neu chua la member trong phong hop thi them vao
-            if (!meetingDAO.isMember(conversationId, userID)) {
-                meetingDAO.addMember(conversationId, userID);
+            String role = "member";
+            ObjectId hostId = room.getObjectId("created_by");
+            if (hostId != null && hostId.equals(userID)) {
+                role = "host";
             }
 
-            // Lay danh sach nguoi dang tham gia cuoc hop
+            // Neu chua join lan nao thi them hoac da tung join sau do leave thi rejoin
+            if (meetingDAO.hasEverJoined(conversationId, userID)) {
+                meetingDAO.rejoin(conversationId, userID);
+            } else {
+                meetingDAO.addParticipant(conversationId, userID, role);
+            }
 
+            // Lay danh sach nguoi dang tham gia cuoc hop de gui ve client
+            List<Document> participants = meetingDAO.getActiveParticipants(conversationId);
+            List<Document> participantList = new ArrayList<>();
+            for (Document p : participants) {
+                ObjectId userId = p.getObjectId("user_id");
 
+                // Lay thong tin user tu users collection
+                Document userDoc = userDAO.getUserById(userId);
+                String username = userDoc != null ? userDoc.getString("username") : "Unknown";
+                String fullname = userDoc != null ? userDoc.getString("fullName") : "Unknown";
+                String avatar = userDoc != null ? userDoc.getString("avatar") : "default_avatar";
+
+                participantList.add(
+                        new Document("user_id", userId.toHexString())
+                                .append("username", username)
+                                .append("fullName", fullname)
+                                .append("avatar", avatar)
+                                .append("role", p.getString("role"))
+                                .append("is_muted", p.getBoolean("is_muted"))
+                                .append("is_camera_on", p.getBoolean("is_camera_on"))
+                );
+
+            }
             return new Document("type", "JOIN_MEETING_OK")
-                    .append("conversationId", conversationId)
+                    .append("conversationId", conversationId.toHexString())
                     .append("meeting_code", meeting_code)
-                    .append("title", room.getString("title"));
-
+                    .append("title", room.getString("title"))
+                    .append("participantList", participantList);
         }
         else {
             return new Document("type", "JOIN_MEETING_FAIL").append("message", "MeetingHandler cannot handle request: " + type);

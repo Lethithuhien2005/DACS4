@@ -157,9 +157,7 @@ public class MongoChatRepository {
         docs.add(new Document("_id", new ObjectId())
                 .append("conversation_id", convoId)
                 .append("user_id", new ObjectId(creatorHex))
-                .append("role", "leader")
-                .append("is_muted", true)
-                .append("is_camera_on", false));
+                .append("role", "leader"));
 
         if (memberIdsHex != null) {
             for (String uid : memberIdsHex) {
@@ -167,9 +165,7 @@ public class MongoChatRepository {
                 docs.add(new Document("_id", new ObjectId())
                         .append("conversation_id", convoId)
                         .append("user_id", new ObjectId(uid))
-                        .append("role", "member")
-                        .append("is_muted", true)
-                        .append("is_camera_on", false));
+                        .append("role", "member"));
             }
         }
 
@@ -215,8 +211,6 @@ public class MongoChatRepository {
                         .append("conversation_id", convoId)
                         .append("user_id", new ObjectId(joinerHex))
                         .append("role", "member")
-                        .append("is_muted", true)
-                        .append("is_camera_on", false)
                 ),
                 new com.mongodb.client.model.UpdateOptions().upsert(true)
         );

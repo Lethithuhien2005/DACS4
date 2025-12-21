@@ -6,17 +6,19 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class MeetingDAO {
     private MongoCollection<Document> conversations;
     private MongoCollection<Document> rooms;
-    private MongoCollection<Document> member;
+    private MongoCollection<Document> meeting_participants;
 
     public MeetingDAO() {
         conversations = MongoDBConnection.getDatabase().getCollection("conversations");
         rooms = MongoDBConnection.getDatabase().getCollection("rooms");
-        member = MongoDBConnection.getDatabase().getCollection("member");
+        meeting_participants = MongoDBConnection.getDatabase().getCollection("meeting_participants");
     }
 
     // Add a meeting to database
@@ -37,15 +39,6 @@ public class MeetingDAO {
                 .append("conversation_id", conservationId);
         rooms.insertOne(roomDoc);
 
-        // Them HOST vao member
-        Document memberDoc = new Document("conversation_id", conservationId)
-                .append("user_id", hostId)
-                .append("role", "host")
-                .append("is_muted", false)
-                .append("is_camera_on", true);
-        member.insertOne(memberDoc);
-
-        // Tra ve conversationID de phuc vu viec chat trong cuoc hop, hien thi danh sach nguoi tham gia ma khong can phai truy van conversationId tu bang rooms
         return conservationId;
     }
 
@@ -56,17 +49,50 @@ public class MeetingDAO {
 
     // Kiem tra user da co trong bang member chua
     public boolean isMember(ObjectId conversationId, ObjectId userId) {
-        Document query = new Document("conversationId", conversationId).append("user_id", userId);
-        return member.find(query).first() != null;
+        Document query = new Document("conversation_id", conversationId).append("user_id", userId);
+        return meeting_participants.find(query).first() != null;
     }
 
-    // Them user vao bang member
-    public void addMember(ObjectId conversationId, ObjectId userId) {
-        Document memberDoc = new Document("conversationId", conversationId)
+    // Them user vao bang meeting_participants
+    public void addParticipant(ObjectId conversationId, ObjectId userId, String role) {
+        Document memberDoc = new Document("conversation_id", conversationId)
                 .append("user_id", userId)
-                .append("role", "member")
+                .append("role", role)
+                .append("joined_at", new Date())
+                .append("left_at", null)
+                .append("status", "joined")
                 .append("is_muted", false)
                 .append("is_camera_on", true);
-        member.insertOne(memberDoc);
+        meeting_participants.insertOne(memberDoc);
     }
+
+    public List<Document> getActiveParticipants(ObjectId conversationId) {
+        List<Document> participantList = new ArrayList<>();
+        meeting_participants.find(new Document("conversation_id", conversationId)
+                        .append("status", "joined")
+        ).forEach(participantList::add);
+
+        return participantList;
+    }
+
+    public boolean hasEverJoined(ObjectId conversationId, ObjectId userId) {
+        Document query = new Document("conversation_id", conversationId)
+                .append("user_id", userId);
+
+        return meeting_participants.find(query).first() != null;
+    }
+
+
+    public void rejoin(ObjectId conversationId, ObjectId userId) {
+        meeting_participants.updateOne(
+                new Document("conversation_id", conversationId)
+                        .append("user_id", userId),
+                new Document("$set",
+                        new Document("status", "JOINED")
+                                .append("left_at", null)
+                                .append("joined_at", new Date()))
+        );
+    }
+
+
 }
