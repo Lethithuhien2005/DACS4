@@ -1,5 +1,7 @@
 package main.Client.View.meeting;
-
+//
+//import common.meeting.ChatMeeting;
+//import common.meeting.MeetingService;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -12,6 +14,12 @@ import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+
+//import main.Client.DTO.Participant;
+import main.Client.Controller.MeetingChatController;
+import main.util.Session;
+//import main.Client.Controller.MeetingService;
+import shared.DTO.ChatMeeting;
 import shared.DTO.Meeting_participantDTO;
 
 import java.util.ArrayList;
@@ -26,13 +34,40 @@ public class MeetingUI extends StackPane {
     private Meeting_participantDTO currentUser;
     private String lastSender = null; // sender cua tin nhan truoc do
 
+    private TextField messageInput;
+    private Button sendBtn;
+    private VBox messageList; // 👈 đưa lên field
+
+
+    private MeetingChatController chatController;
+//
+//    public MeetingUI(String meetingId, String currentUserName) {
+//        initUI();          // tạo layout, chatVBox, inputField, sendBtn
+//        initMeetingChat(meetingId, currentUserName);
+//    }
 
     private StackPane contentPane;
 
+    private String fakeRoomId;
     public MeetingUI(StackPane contentPane) {
         this.contentPane = contentPane;
+
+
+        fakeRoomId = "MEETING_TEST_001";
         initUI();
+
+//        initMeetingChat(
+//                fakeRoomId,      // hoặc meetingId bạn có
+//                Session.getInstance().getUserIdHex()        // hoặc userName
+//        );
     }
+
+//    public MeetingUI(String meetingId, String currentUserName, StackPane contentPane) {
+//        this.contentPane = contentPane;
+//        initUI();
+//        initMeetingChat(meetingId, currentUserName);
+//    }
+
 
     // Giữ constructor cũ nếu cần
     public MeetingUI() {
@@ -41,7 +76,45 @@ public class MeetingUI extends StackPane {
 
 //    public MeetingUI() {
     private void initUI() {
-        currentUser = getCurrentUser();
+        messageList = new VBox(8);
+        messageList.setPadding(new Insets(5));
+
+        ScrollPane scrollPane = new ScrollPane(messageList);
+        scrollPane.setFitToWidth(true);
+
+        Session session = Session.getInstance();
+        if (!session.isLoggedIn()) {
+            System.out.println("❌ User not logged in");
+        }
+
+        String userId = session.getUserIdHex();
+        chatController = new MeetingChatController(fakeRoomId, userId);
+        chatController.setUiListener(new MeetingChatController.UiListener() {
+            @Override
+            public void onMessageReceived(ChatMeeting msg) {
+//                addMessage(msg.getSender(), msg.getContent());
+                if (msg.getSender().equals(Session.getInstance().getUserIdHex())) {
+                    return; // tránh duplicate
+                }
+                addMessage(msg.getSender(), msg.getContent());
+            }
+
+            @Override
+            public void onSystemMessage(String text) {
+                addSystemMessage(text);
+            }
+        });
+        try {
+            chatController.connect();
+            System.out.println("✅ RMI meeting chat connected");
+        } catch (Exception e) {
+            e.printStackTrace();
+            addSystemMessage("Cannot connect meeting chat");
+        }
+        //
+        //currentUser = getCurrentUser();
+
+
 
         rootLayout = new HBox();
         rootLayout.setSpacing(10);   // nếu bạn muốn khoảng giữa 2 panel
@@ -265,12 +338,12 @@ public class MeetingUI extends StackPane {
         // Lay danh sach nguoi tham gia
         getParticipantsList();
 
-        ScrollPane scrollPane = new ScrollPane(listParticipants);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setStyle("-fx-background-color: #fff");
+        ScrollPane scrollPaneListParticipants = new ScrollPane(listParticipants);
+        scrollPaneListParticipants.setFitToWidth(true);
+        scrollPaneListParticipants.setStyle("-fx-background-color: #fff");
 
         numberParticipants.getChildren().addAll(numberLabel, numberOfParticipant, addParticipantButton);
-        listContainer.getChildren().addAll(numberParticipants, scrollPane);
+        listContainer.getChildren().addAll(numberParticipants, scrollPaneListParticipants);
 
         // Chatting trong cuoc hop
         VBox chatContainer = new VBox(5);
@@ -298,8 +371,6 @@ public class MeetingUI extends StackPane {
         messageHeader.getChildren().addAll(title, spacer2, chatIcon);
 
         // Khu vuc hien thi tin nhan
-        VBox messageList = new VBox(8);
-        messageList.setPadding(new Insets(5));
         messageList.setStyle("-fx-background-color: #fff");
 
         // Đoạn này chỉ dùng test UI – sau này xóa
@@ -366,7 +437,8 @@ public class MeetingUI extends StackPane {
 
         });
 
-        TextField messageInput = new TextField();
+
+        messageInput = new TextField();
         messageInput.setPromptText("Write message here...");
         messageInput.setPrefHeight(38);
         messageInput.setStyle("-fx-background-radius: 20; -fx-border-radius: 20; -fx-background-color: #fff;");
@@ -374,7 +446,7 @@ public class MeetingUI extends StackPane {
         ImageView sendImageView = new ImageView(new Image(getClass().getResource("/images/meeting/send.png").toExternalForm()));
         sendImageView.setFitHeight(18);
         sendImageView.setFitWidth(18);
-        Button sendBtn = new Button();
+        sendBtn = new Button();
         sendBtn.setGraphic(sendImageView);
         sendBtn.setMinSize(18, 18);
         sendBtn.setMaxSize(18, 18);
@@ -383,11 +455,36 @@ public class MeetingUI extends StackPane {
                 "-fx-background-color: #fff;"
         );
         sendBtn.setPrefSize(38, 38);
+        sendBtn.setOnAction(e -> {
+            System.out.println("[UI] Send button clicked");
+
+            String text = messageInput.getText().trim();
+            if (text.isEmpty()) return;
+
+            // Optimistic UI
+            //addMessage(userId, text);
+            addMessage(
+                    Session.getInstance().getUserIdHex(),
+                    text
+            );
+
+            try {
+                chatController.sendMessage(text);
+                messageInput.clear();
+                System.out.println("[UI] Message sent");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        // ENTER = SEND
+        messageInput.setOnAction(e -> sendBtn.fire());
         HBox.setMargin(sendBtn, new Insets(0, 10, 0, 0));
 
-        sendBtn.setOnMouseClicked(e -> {
+//        sendBtn.setOnMouseClicked(e -> {
+//
+//        });
 
-        });
 
         HBox inputArea = new HBox(8, addFileBtn, messageInput, sendBtn);
         inputArea.setPadding(new Insets(5, 8, 5, 8));
@@ -409,6 +506,9 @@ public class MeetingUI extends StackPane {
         rightContainer.prefWidthProperty().bind(rootLayout.widthProperty().multiply(0.3));
         rootLayout.getChildren().addAll(videoContainer, rightContainer);
         this.getChildren().add(rootLayout);
+
+        addSystemMessage("Welcome to meeting chat");
+
     }
 
     // Dieu khien cac button trong video call
@@ -601,6 +701,132 @@ public class MeetingUI extends StackPane {
 
     public VideoCallPane getVideoCallPane() {
         return videoCallPane;
+    }
+
+//    private void initMeetingChat(String meetingId, String currentUserName) {
+//
+//        chatController = new MeetingChatController(meetingId, currentUserName);
+//
+//        chatController.setUiListener(new MeetingChatController.UiListener() {
+//
+//            @Override
+//            public void onMessageReceived(MeetingService.ChatMessage msg) {
+//                addMessage(msg.getSender(), msg.getContent());
+//            }
+//
+//            @Override
+//            public void onSystemMessage(String text) {
+//                addSystemMessage(text);
+//            }
+//        });
+//
+//        try {
+//            chatController.connect(); // ⭐ CONNECT RMI TẠI ĐÂY
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            addSystemMessage("Cannot connect meeting chat");
+//        }
+//
+//        // SEND BUTTON
+//        sendBtn.setOnAction(e -> {
+//            try {
+//                chatController.sendMessage(messageInput.getText());
+//                messageInput.clear();
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//            }
+//        });
+//
+//        // ENTER = SEND
+//        messageInput.setOnAction(e -> sendBtn.fire());
+//
+//    }
+
+
+//    private void initMeetingChat(String meetingId, String currentUserName) {
+//
+//        chatController = new MeetingChatController(meetingId, currentUserName);
+//
+//        chatController.setUiListener(new MeetingChatController.UiListener() {
+//
+//            @Override
+//            public void onMessageReceived(ChatMeeting msg) {
+//                // msg là ChatMessage đúng kiểu
+//                addMessage(msg.getSender(), msg.getContent());
+//            }
+//
+//            @Override
+//            public void onSystemMessage(String text) {
+//                addSystemMessage(text);
+//            }
+//        });
+//
+//        try {
+//            chatController.connect(); // CONNECT RMI
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            addSystemMessage("Cannot connect meeting chat");
+//        }
+//
+//        // SEND BUTTON
+//        sendBtn.setOnAction(e -> {
+//            System.out.println("👉 [UI] Send button clicked");
+//            String text = messageInput.getText().trim();
+//            if (text.isEmpty()) {
+//                System.out.println("⚠️ [UI] Message is empty, not sending");
+//                return;
+//            }
+//
+//
+//            // ✅ HIỂN THỊ NGAY TRÊN UI
+//            addMessage(
+//                    Session.getInstance().getUserIdHex(),
+//                    text
+//            );
+//
+//            try {
+//                System.out.println("📤 [UI] Sending message: " + text);
+//
+//                chatController.sendMessage(messageInput.getText());
+//                messageInput.clear();
+//
+//                System.out.println("✅ [UI] Message sent, input cleared");
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//            }
+//        });
+//
+//        // ENTER = SEND
+//        messageInput.setOnAction(e -> sendBtn.fire());
+//    }
+
+
+    private void addMessage(String sender, String content) {
+        String time = java.time.LocalTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+
+//        boolean isMine = sender.equals(currentUser.getFullname());
+//        boolean isMine = sender.equals(Session.getInstance().getUserIdHex());
+//        String displayName = currentUser.getFullname();
+
+        boolean isMine = sender.equals("You");
+        HBox row = createMessageRow(
+                sender,
+                content,
+                time,
+                isMine,
+                lastSender
+        );
+
+        messageList.getChildren().add(row);
+        lastSender = sender;
+    }
+
+    private void addSystemMessage(String text) {
+        Label label = new Label(text);
+        label.setStyle("-fx-font-size: 11px; -fx-text-fill: #999;");
+        label.setAlignment(Pos.CENTER);
+        messageList.getChildren().add(label);
     }
 
 }

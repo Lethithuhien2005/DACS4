@@ -9,6 +9,7 @@ import org.bson.types.ObjectId;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -16,11 +17,13 @@ public class MeetingDAO {
     private MongoCollection<Document> conversations;
     private MongoCollection<Document> rooms;
     private MongoCollection<Document> meeting_participants;
+    private MongoCollection<Document> messages;
 
     public MeetingDAO() {
         conversations = MongoDBConnection.getDatabase().getCollection("conversations");
         rooms = MongoDBConnection.getDatabase().getCollection("rooms");
         meeting_participants = MongoDBConnection.getDatabase().getCollection("meeting_participants");
+        messages = MongoDBConnection.getDatabase().getCollection("messages");
     }
 
     // Add a meeting to database
@@ -37,6 +40,7 @@ public class MeetingDAO {
                 .append("meeting_code", meeting_code)
                 .append("passcode", passcode)
                 .append("status", "active")
+                .append("created_by", hostId)
                 .append("created_at", new Date())
                 .append("conversation_id", conservationId);
         rooms.insertOne(roomDoc);
@@ -90,13 +94,36 @@ public class MeetingDAO {
         return meeting_participants.find(query).first() != null;
     }
 
+    public List<Document> getMeetingTodayByUser(ObjectId userID) {
+
+        // Lấy thời gian đầu ngày & cuối ngày
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date startOfDay = cal.getTime();
+
+        cal.add(Calendar.DAY_OF_MONTH, 1);
+        Date endOfDay = cal.getTime();
+
+        // Lấy danh sách room_id user đã tham gia
+        List<ObjectId> roomIds = meeting_participants.find(new Document("user_id", userID)).map(doc -> doc.getObjectId("room_id"))
+                .into(new ArrayList<>());
+
+        // Lay nhung cuoc hop hom nay
+        Document query = new Document("_id", new Document("$in", roomIds))
+                .append("created_at", new Document("$gte", startOfDay).append("$lt", endOfDay));
+        return rooms.find(query).into(new ArrayList<>());
+
+    }
 
     public void rejoin(ObjectId roomId, ObjectId userId) {
         meeting_participants.updateOne(
                 new Document("room_id", roomId)
                         .append("user_id", userId),
                 new Document("$set",
-                        new Document("status", "JOINED")
+                        new Document("status", "joined")
                                 .append("left_at", null)
                                 .append("joined_at", new Date()))
         );
@@ -114,6 +141,20 @@ public class MeetingDAO {
                         Updates.set("left_at", System.currentTimeMillis())
                 )
         );
+    }
+
+    public void saveMessage(
+            ObjectId conversationId,
+            String senderId,
+            String content
+    ) {
+        Document doc = new Document()
+                .append("conversation_id", conversationId)
+                .append("sender_id", senderId)
+                .append("content", content)
+                .append("created_at", Date.from(Instant.now()));
+
+        messages.insertOne(doc);
     }
 
 }

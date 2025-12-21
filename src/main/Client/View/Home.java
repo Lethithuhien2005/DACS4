@@ -11,6 +11,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Popup;
+import main.Client.ClientMain;
 import main.Client.Controller.MeetingController;
 import shared.MeetingService;
 //import main.Client.DTO.Meeting;
@@ -35,9 +36,6 @@ public class Home extends StackPane {
 
     private MeetingController meetingController;
     private MeetingUI meetingUI;
-    private MeetingService meetingService;
-
-
 
     public Home(StackPane contentPane) {
         this.contentPane = contentPane;
@@ -46,7 +44,8 @@ public class Home extends StackPane {
         this.meetingUI = new MeetingUI(contentPane);
 
         // 2. Truyền ĐỦ dependency cho Controller
-        this.meetingController = new MeetingController(this, meetingUI, meetingService);
+        this.meetingController = new MeetingController(this, meetingUI, ClientMain.meetingService);
+        meetingController.loadMeetingsToday();
 
         HBox container = new HBox();
         VBox leftContainer = new VBox();
@@ -770,10 +769,15 @@ public class Home extends StackPane {
 
             meetingTodayContainer.setVisible(true);
             meetingTodayContainer.setManaged(true);
+
         }
 
+        int index = meetingTodayContainer.getChildren().size();
+        int col = index % 2;      // 2 cột
+        int row = index / 2;
+
         VBox meetingBox = createMeetingBox(title, meetingCode, passcode, timestamp);
-        meetingTodayContainer.getChildren().add(meetingBox);
+        meetingTodayContainer.add(meetingBox, col, row);
     }
 
     // Tao UI cho 1 item meeting today
@@ -915,8 +919,21 @@ public class Home extends StackPane {
 //        // Add nodes
 //        box.getChildren().addAll(titleLabel, timeBox, hostBox);
 //
+//      meetingController.loadMeetingsToday();
 //        return box;
 //    }
+
+
+    public void clearMeetingsToday() {
+        meetingTodayContainer.getChildren().clear();
+    }
+
+    public void showNoMeeting() {
+        noMeetingBox.setVisible(true);
+        noMeetingBox.setManaged(true);
+        meetingTodayContainer.setVisible(false);
+        meetingTodayContainer.setManaged(false);
+    }
 
 
 

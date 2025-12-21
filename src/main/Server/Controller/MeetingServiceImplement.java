@@ -1,5 +1,19 @@
 package main.Server.Controller;
 
+import main.Server.DAO.MeetingDAO;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
+import java.rmi.server.UnicastRemoteObject;
+import java.rmi.RemoteException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+//import common.meeting.MeetingService;
+//import common.meeting.ChatMeeting;
+
+
+import shared.ChatService;
 import shared.DTO.Meeting_participantDTO;
 import shared.DTO.RoomDTO;
 import shared.MeetingClientCallback;
@@ -17,7 +31,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 public class MeetingServiceImplement extends UnicastRemoteObject implements MeetingService {
+
     private MeetingDAO meetingDAO;
     private UserDAO userDAO;
     // Luu callback cua tat ca client theo phong (roonID)
@@ -33,6 +49,7 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
     public void createMeeting(String hostId, String title, String passcode, MeetingClientCallback callback) throws RemoteException {
         if (hostId == null) {
             callback.onCreateMeetingFail("User not loggin.");
+            return;
         }
         if (title == null) {
             callback.onCreateMeetingFail("Meeting title is required");
@@ -46,6 +63,9 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
 
         // Lay phong hop thong qua conversationId
         Document roomDoc = meetingDAO.getRoomByConversationId(conversationId);
+        ObjectId roomId = roomDoc.getObjectId("_id");
+        // Them host vao meeting_participants
+        meetingDAO.addParticipant(roomId, hostObjectId, "host");
 
         // Tra ket qua cho client
         // CONVERT ObjectId → String
@@ -55,7 +75,8 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
         roomDTO.setPasscode(roomDoc.getString("passcode"));
         roomDTO.setStatus(roomDoc.getString("status"));
         roomDTO.setConservationId(conversationId.toHexString());
-        roomDTO.setCreated_at(roomDoc.getLong("created_at"));
+        Date createdAt = roomDoc.getDate("created_at");
+        roomDTO.setCreated_at(createdAt.getTime());
 
         callback.onCreateMeetingSuccess(roomDTO.getMeeting_code(), roomDTO.getPasscode(), roomDTO.getTitle(), roomDTO.getCreated_at());
     }
@@ -179,6 +200,28 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
 
         // Thong bao cho cac client cap nhat giao dien
         notifyUpdatingParticipants(roomId.toHexString());
+    }
+
+    // Load cac cuoc hop hom nay moi lan vao Home
+    @Override
+    public List<RoomDTO> getMeetingsToday(String userId) throws RemoteException {
+        ObjectId userID = new ObjectId(userId);
+
+        List<Document> rooms = meetingDAO.getMeetingTodayByUser(userID);
+        List<RoomDTO> meetingsToday = new ArrayList<>();
+
+        for (Document r : rooms) {
+            RoomDTO dto = new RoomDTO();
+            dto.setMeeting_code(r.getString("meeting_code"));
+            dto.setTitle(r.getString("title"));
+            dto.setPasscode(r.getString("passcode"));
+
+            Date createdAt = r.getDate("created_at");
+            dto.setCreated_at(createdAt.getTime());
+
+            meetingsToday.add(dto);
+        }
+        return meetingsToday;
     }
 
 }

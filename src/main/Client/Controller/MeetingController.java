@@ -5,10 +5,12 @@ import main.Client.View.Home;
 import main.Client.View.meeting.MeetingUI;
 import main.util.DialogUtil;
 import main.util.Session;
+import shared.DTO.RoomDTO;
 import shared.MeetingClientCallback;
 import shared.MeetingService;
 
 import java.rmi.RemoteException;
+import java.util.List;
 
 public class MeetingController {
     private Home homeView;
@@ -31,7 +33,7 @@ public class MeetingController {
     // Khi nguoi dung click vao button Create a new meeting
     public void onClickCreatMeeting() {
         String titleMeeting = homeView.titleTextField.getText();
-        String passcode = homeView.titleTextField.getText();
+        String passcode = homeView.passwordMeeting.getText();
         String userID = Session.getInstance().getUserIdHex();
 
         if (titleMeeting.isEmpty()) {
@@ -55,7 +57,7 @@ public class MeetingController {
                 e.printStackTrace();
                 Platform.runLater(() -> DialogUtil.showError("Connect to server", null, "TCP not connected!"));
             }
-        });
+        }).start();
     }
 
     // Khi nguoi dung click vao button Join the meeting now hoac Join now
@@ -89,5 +91,38 @@ public class MeetingController {
         }).start();
 
     }
+
+    public void loadMeetingsToday() {
+        String userId = Session.getInstance().getUserIdHex();
+
+        if (userId == null) return;
+
+        new Thread(() -> {
+            try {
+                List<RoomDTO> meetings = meetingService.getMeetingsToday(userId);
+
+                Platform.runLater(() -> {
+                    homeView.clearMeetingsToday();
+
+                    if (meetings.isEmpty()) {
+                        homeView.showNoMeeting();
+                    } else {
+                        meetings.forEach(m ->
+                                homeView.addMeetingToday(
+                                        m.getTitle(),
+                                        m.getMeeting_code(),
+                                        m.getPasscode(),
+                                        m.getCreated_at()
+                                )
+                        );
+                    }
+                });
+
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
 
 }

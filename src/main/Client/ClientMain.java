@@ -6,30 +6,33 @@ import javafx.stage.Stage;
 import main.Client.Network.TCP.SocketClient;
 import main.Client.View.LogIn;
 import main.util.DialogUtil;
+import shared.ChatService;
 import shared.MeetingService;
-
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 public class ClientMain extends Application {
-    private MeetingService meetingService;
+
+    // GIỮ RMI SERVICE TOÀN CLIENT
+    public static MeetingService meetingService;
+    public static ChatService chatService;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
 
         // Connect TCP ngay khi app start (chạy trong thread riêng)
         connectTCP();
-        connectRMI();
 
-        // 2. Mở Login
-        LogIn login = new LogIn();
-        try {
-            login.start(primaryStage);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-   }
+        // Connect RMI và mở Login chỉ khi RMI sẵn sàng
+        connectRMI(() -> {
+            try {
+                LogIn login = new LogIn();
+                login.start(primaryStage);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
 
     private void connectTCP() {
         new Thread(() -> {
@@ -37,24 +40,31 @@ public class ClientMain extends Application {
                 SocketClient.getInstance().connect("localhost", 5555);
                 System.out.println("TCP Connected!");
             } catch (Exception ex) {
-                ex.printStackTrace();
-                Platform.runLater(() -> {
-                    DialogUtil.showError(
-                            "Connect error",
-                            "Couldn't connect to server",
-                            "Connected to Server failed"
-                    );
-                });
+                Platform.runLater(() ->
+                        DialogUtil.showError(
+                                "TCP Error",
+                                "Cannot connect TCP server",
+                                ex.getMessage()
+                        )
+                );
             }
         }).start();
     }
 
-    private void connectRMI() {
+    private void connectRMI(Runnable onSuccess) {
         new Thread(() -> {
             try {
                 // lookup service
                 Registry registry = LocateRegistry.getRegistry("localhost", 2005);
-                meetingService = (MeetingService) registry.lookup("BankService");
+                meetingService = (MeetingService) registry.lookup("MeetingService");
+                chatService    = (ChatService) registry.lookup("ChatService");
+
+                // Cho RMI ket noi xong truoc khi mo Home/Controller
+                System.out.println("RMI Connected!");
+                if (onSuccess != null) {
+                    Platform.runLater(onSuccess);
+                }
+
                 System.out.println("RMI Connected!");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -68,7 +78,9 @@ public class ClientMain extends Application {
     }
 
     public static void main(String[] args) {
+        // BẮT BUỘC cho RMI callback
+        System.setProperty("java.rmi.server.hostname", "127.0.0.1");
+
         launch(args);
     }
-
 }
