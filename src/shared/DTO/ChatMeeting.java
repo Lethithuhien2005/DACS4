@@ -1,4 +1,4 @@
-package common.meeting;
+package shared.DTO;
 
 import java.io.Serializable;
 

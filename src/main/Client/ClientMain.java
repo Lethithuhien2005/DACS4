@@ -56,7 +56,7 @@
 
 package main.Client;
 
-import common.meeting.MeetingService;
+//import common.meeting.MeetingService;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -64,6 +64,12 @@ import javafx.stage.Stage;
 import main.Client.Network.TCP.SocketClient;
 import main.Client.View.LogIn;
 import main.util.DialogUtil;
+import shared.ChatService;
+import shared.MeetingService;
+//import shared.MeetingService;
+
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -72,12 +78,19 @@ public class ClientMain extends Application {
 
     // ⭐ GIỮ RMI SERVICE TOÀN CLIENT
     public static MeetingService meetingService;
+    public static ChatService chatService;
+
+//    @Override
+//    public void start(Stage primaryStage) {
+
+//    private MeetingService meetingService;
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage primaryStage) throws Exception {
 
-        // ===== 1. CONNECT TCP =====
+        // Connect TCP ngay khi app start (chạy trong thread riêng)
         connectTCP();
+        connectRMI();
 
         // ===== 2. CONNECT RMI =====
         connectRMI();
@@ -108,25 +121,49 @@ public class ClientMain extends Application {
         }).start();
     }
 
-    // ⭐ RMI CONNECT
+    // RMI CONNECT
+//    private void connectRMI() {
+//        try {
+//            Registry registry = LocateRegistry.getRegistry("localhost", 2005);
+//            meetingService = (MeetingService) registry.lookup("MeetingService");
+//            System.out.println("RMI Connected!");
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            DialogUtil.showError(
+//                    "RMI Error",
+//                    "Cannot connect RMI server",
+//                    e.getMessage()
+//            );
+//            System.exit(0);
+//        }
+//    }
+
     private void connectRMI() {
-        try {
-            Registry registry = LocateRegistry.getRegistry("localhost", 2005);
-            meetingService = (MeetingService) registry.lookup("MeetingService");
-            System.out.println("RMI Connected!");
-        } catch (Exception e) {
-            e.printStackTrace();
-            DialogUtil.showError(
-                    "RMI Error",
-                    "Cannot connect RMI server",
-                    e.getMessage()
-            );
-            System.exit(0);
-        }
+        new Thread(() -> {
+            try {
+                // lookup service
+                Registry registry = LocateRegistry.getRegistry("localhost", 2005);
+                meetingService = (MeetingService) registry.lookup("MeetingService");
+                chatService    = (ChatService) registry.lookup("ChatService");
+
+                System.out.println("RMI Connected!");
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> DialogUtil.showError(
+                        "RMI Connect error",
+                        "Couldn't connect to RMI server",
+                        "RMI connection failed"
+                ));
+            }
+        }).start();
     }
 
+//    public static void main(String[] args) {
+//        launch(args);
+//    }
+
     public static void main(String[] args) {
-        // ⭐ CỰC KỲ QUAN TRỌNG
+        // BẮT BUỘC cho RMI callback
         System.setProperty("java.rmi.server.hostname", "127.0.0.1");
 
         launch(args);

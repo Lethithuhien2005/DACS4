@@ -1,6 +1,7 @@
 package main.Server.DAO;
 
 import com.mongodb.client.MongoCollection;
+import main.Server.Model.Room;
 import main.util.MongoDBConnection;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -44,10 +45,16 @@ public class MeetingDAO {
         return conservationId;
     }
 
+    // Lay phong hop thong qua meetingCode
+    public Document getRoomByMeetingCode(String meetingCode) {
+        return rooms.find(new Document("meeting_code", meetingCode)).first();
+    }
+
     // Lay phong hop thong qua conversationId
     public Document getRoomByConversationId(ObjectId conversationId) {
         return rooms.find(new Document("conversation_id", conversationId)).first();
     }
+
 
     // Kiem tra user da co trong bang member chua
     public boolean isMember(ObjectId conversationId, ObjectId userId) {
@@ -56,8 +63,8 @@ public class MeetingDAO {
     }
 
     // Them user vao bang meeting_participants
-    public void addParticipant(ObjectId conversationId, ObjectId userId, String role) {
-        Document memberDoc = new Document("conversation_id", conversationId)
+    public void addParticipant(ObjectId roomId, ObjectId userId, String role) {
+        Document memberDoc = new Document("room_id", roomId)
                 .append("user_id", userId)
                 .append("role", role)
                 .append("joined_at", new Date())
@@ -68,26 +75,26 @@ public class MeetingDAO {
         meeting_participants.insertOne(memberDoc);
     }
 
-    public List<Document> getActiveParticipants(ObjectId conversationId) {
+    public List<Document> getActiveParticipants(ObjectId roomId) {
         List<Document> participantList = new ArrayList<>();
-        meeting_participants.find(new Document("conversation_id", conversationId)
+        meeting_participants.find(new Document("room_id", roomId)
                         .append("status", "joined")
         ).forEach(participantList::add);
 
         return participantList;
     }
 
-    public boolean hasEverJoined(ObjectId conversationId, ObjectId userId) {
-        Document query = new Document("conversation_id", conversationId)
+    public boolean hasEverJoined(ObjectId roomId, ObjectId userId) {
+        Document query = new Document("room_id", roomId)
                 .append("user_id", userId);
 
         return meeting_participants.find(query).first() != null;
     }
 
 
-    public void rejoin(ObjectId conversationId, ObjectId userId) {
+    public void rejoin(ObjectId roomId, ObjectId userId) {
         meeting_participants.updateOne(
-                new Document("conversation_id", conversationId)
+                new Document("room_id", roomId)
                         .append("user_id", userId),
                 new Document("$set",
                         new Document("status", "JOINED")

@@ -7,18 +7,24 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import main.util.Session;
-
-import common.meeting.MeetingService;
-import common.meeting.ChatMeeting;
+import shared.ChatClientCallback;
+import shared.ChatService;
+import shared.DTO.ChatMeeting;
+import shared.MeetingService;
+//
+//import common.meeting.MeetingService;
+//import common.meeting.ChatMeeting;
 
 
 public class MeetingChatController {
 
-    private MeetingService meetingService;
+    private ChatService chatService;
     private String room_id ;
     private String userName;
 
-    private MeetingService.ClientCallback callback;
+//    private MeetingService.ClientCallback callback;
+    private ChatClientCallback callback;
+
 
     public interface UiListener {
         void onMessageReceived(ChatMeeting msg);
@@ -38,12 +44,12 @@ public class MeetingChatController {
 
     /* ===== CONNECT RMI ===== */
     public void connect() throws Exception {
-        meetingService = ClientMain.meetingService;
+        chatService = ClientMain.chatService;
 
 //        callback = new ClientCallbackImpl();
 //        meetingService.joinMeeting(room_id, userName, callback);
 
-        if (meetingService == null) {
+        if (chatService == null) {
             throw new IllegalStateException("RMI MeetingService not connected");
         }
 
@@ -51,7 +57,9 @@ public class MeetingChatController {
 //        MeetingService.ClientCallback callback =
 //                new ClientCallbackImpl();
         callback = new ClientCallbackImpl();
-        meetingService.joinMeeting(room_id, userName, callback);
+        chatService.joinRoom(room_id, userName, callback);
+
+        System.out.println("[CLIENT] Joined chat room: " + room_id);
     }
 
     /* ===== SEND MESSAGE ===== */
@@ -67,7 +75,7 @@ public class MeetingChatController {
                         text
                 );
 
-        meetingService.sendMessage(room_id, msg);
+        chatService.sendMessage(room_id, msg);
 
         System.out.println(
                 "[CLIENT] Message sent successfully by userId=" + senderId
@@ -78,7 +86,7 @@ public class MeetingChatController {
     /* ===== CALLBACK IMPLEMENT ===== */
     private class ClientCallbackImpl
             extends UnicastRemoteObject
-            implements MeetingService.ClientCallback {
+            implements ChatClientCallback {
 
         protected ClientCallbackImpl() throws RemoteException {
             super();
@@ -93,22 +101,22 @@ public class MeetingChatController {
             });
         }
 
-        @Override
-        public void onUserJoined(String name) {
-            Platform.runLater(() -> {
-                if (uiListener != null) {
-                    uiListener.onSystemMessage(name + " joined the meeting");
-                }
-            });
-        }
-
-        @Override
-        public void onUserLeft(String name) {
-            Platform.runLater(() -> {
-                if (uiListener != null) {
-                    uiListener.onSystemMessage(name + " left the meeting");
-                }
-            });
-        }
+//        @Override
+//        public void onUserJoined(String name) {
+//            Platform.runLater(() -> {
+//                if (uiListener != null) {
+//                    uiListener.onSystemMessage(name + " joined the meeting");
+//                }
+//            });
+//        }
+//
+//        @Override
+//        public void onUserLeft(String name) {
+//            Platform.runLater(() -> {
+//                if (uiListener != null) {
+//                    uiListener.onSystemMessage(name + " left the meeting");
+//                }
+//            });
+//        }
     }
 }
