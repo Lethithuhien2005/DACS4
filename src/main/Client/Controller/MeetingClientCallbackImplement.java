@@ -1,6 +1,7 @@
 package main.Client.Controller;
 
 import javafx.application.Platform;
+import javafx.scene.layout.StackPane;
 import main.Client.View.meeting.VideoTile;
 import main.util.Session;
 import shared.DTO.Meeting_participantDTO;
@@ -40,6 +41,9 @@ public class MeetingClientCallbackImplement extends UnicastRemoteObject implemen
     @Override
     public void onJoinMeetingSuccess(List<Meeting_participantDTO> participantList) throws RemoteException {
         Platform.runLater(() -> {
+            // Hien thi trang Meeting
+            StackPane contentPane = meetingUI.getContentPane();
+            contentPane.getChildren().setAll(meetingUI);
             // clear UI cũ
             List<VideoTile> tiles = meetingUI.getTiles();
             tiles.clear();

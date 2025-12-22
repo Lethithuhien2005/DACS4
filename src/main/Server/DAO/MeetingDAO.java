@@ -134,7 +134,7 @@ public class MeetingDAO {
                 Filters.and(
                         Filters.eq("room_id", roomId),
                         Filters.eq("user_id", userId),
-                        Filters.eq("status", "active") // chỉ update nếu đang active
+                        Filters.eq("status", "joined") // chỉ update nếu đang trong phong hop
                 ),
                 Updates.combine(
                         Updates.set("status", "left"),

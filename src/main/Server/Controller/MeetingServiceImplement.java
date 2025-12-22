@@ -87,6 +87,7 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
         Document room = meetingDAO.getRoomByMeetingCode(meetCode);
         if (room == null) {
             callback.onJoinMeetingFail("Meeting room not found");
+            return;
         }
 
         // Kiem tra passcode
