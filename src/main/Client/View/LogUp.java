@@ -186,42 +186,10 @@ public class LogUp extends Application {
         signUpBtn.setPrefHeight(40);
         VBox.setMargin(signUpBtn, new Insets(15, 0, 0, 0));
 
-        // Set Action for Signin Btn
-//        signInBtn.setOnAction(e -> {
-//            // Get value from form
-//            String username = nameTextField.getText();
-//            String emailText = emailTextField.getText();
-//            String passwordText = passwordField.getText();
-//            String fullName = fullnameTextField.getText();
-//
-//            UserController logUpController = new UserController();
-//            String result = logUpController.register(username, fullName, emailText, passwordText);
-//
-//            if (result.equals("SUCCESS")) {
-//                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-//                alert.setHeaderText(null);
-//                alert.setContentText("Sign up successful!");
-//                alert.showAndWait();
-//
-//                LogIn logInPage = new LogIn();
-//                Stage loginStage = new Stage();
-//                try {
-//                    logInPage.start(loginStage);
-//                    stage.close();
-//                } catch (Exception ex) {
-//                    ex.printStackTrace();
-//                }
-//            } else {
-//                Alert alert = new Alert(Alert.AlertType.ERROR);
-//                alert.setHeaderText(null);
-//                alert.setContentText(result);
-//                alert.show();
-//            }
-//        });
 
-//        signUpBtn.setOnAction(e -> controller.onClickLogup());
+        signUpBtn.setOnAction(e -> controller.onClickLogup());
 
-        // Keep the same size for email, password and button when window change size
+
         signUpBtn.prefWidthProperty().bind(email.widthProperty());
         password.prefWidthProperty().bind(email.widthProperty());
 

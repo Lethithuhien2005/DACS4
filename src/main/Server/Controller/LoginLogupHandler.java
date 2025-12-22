@@ -39,6 +39,19 @@ public class LoginLogupHandler {
 
     private Document handleLogup(Document request) {
         // TODO: xử lý logup
-        return new Document("type", "LOGUP_RESPONSE").append("status", "OK");
+//        return new Document("type", "LOGUP_RESPONSE").append("status", "OK");
+        String username = request.getString("username");
+        String fullname = request.getString("fullname");
+        String email = request.getString("email");
+        String password = request.getString("password");
+
+        String result = userController.register(username, fullname, email, password);
+
+        if ("SUCCESS".equals(result)) {
+            return new Document("type", "LOGUP_OK");
+        } else {
+            return new Document("type", "LOGUP_FAIL")
+                    .append("message", result);
+        }
     }
 }
