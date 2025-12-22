@@ -84,7 +84,7 @@ public class MeetingUI extends StackPane {
 
         Session session = Session.getInstance();
         if (!session.isLoggedIn()) {
-            System.out.println("❌ User not logged in");
+            System.out.println("User not logged in");
         }
 
         String userId = session.getUserIdHex();
@@ -806,10 +806,10 @@ public class MeetingUI extends StackPane {
                 .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
 
 //        boolean isMine = sender.equals(currentUser.getFullname());
-//        boolean isMine = sender.equals(Session.getInstance().getUserIdHex());
+        boolean isMine = sender.equals(Session.getInstance().getUserIdHex());
 //        String displayName = currentUser.getFullname();
 
-        boolean isMine = sender.equals("You");
+//        boolean isMine = sender.equals("You");
         HBox row = createMessageRow(
                 sender,
                 content,
