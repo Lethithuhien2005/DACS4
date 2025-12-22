@@ -8,6 +8,9 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import main.util.ImageUtil;
+
+import java.net.URL;
 
 public class VideoTile extends StackPane {
     private ImageView videoView;
@@ -73,11 +76,6 @@ public class VideoTile extends StackPane {
 
     // nhận avatar từ backend (String)
     public void setAvatar(String avatarName) {
-        Image avatar = new Image(
-                getClass().getResource(
-                        "/images/avatars/" + avatarName + ".png"
-                ).toExternalForm()
-        );
-        avatarView.setImage(avatar);
+        avatarView.setImage(ImageUtil.loadAvatarSafe(avatarName));
     }
 }

@@ -17,6 +17,7 @@ import javafx.scene.text.FontWeight;
 
 //import main.Client.DTO.Participant;
 import main.Client.Controller.MeetingChatController;
+import main.util.ImageUtil;
 import main.util.Session;
 //import main.Client.Controller.MeetingService;
 import shared.DTO.ChatMeeting;
@@ -84,7 +85,7 @@ public class MeetingUI extends StackPane {
 
         Session session = Session.getInstance();
         if (!session.isLoggedIn()) {
-            System.out.println("❌ User not logged in");
+            System.out.println("User not logged in");
         }
 
         String userId = session.getUserIdHex();
@@ -243,7 +244,7 @@ public class MeetingUI extends StackPane {
                 HBox row = new HBox(10);
                 row.setPadding(new Insets(5));
 
-                ImageView avatar = new ImageView(new Image(p.getAvatar()));
+                ImageView avatar = new ImageView((ImageUtil.loadAvatarSafe(p.getAvatar())));
                 avatar.setFitWidth(40);
                 avatar.setFitHeight(40);
                 avatar.setClip(new Circle(20, 20, 20));

@@ -6,6 +6,7 @@ import javafx.stage.Stage;
 import main.Client.Network.TCP.SocketClient;
 import main.Client.View.LogIn;
 import main.util.DialogUtil;
+import main.util.IPUtil;
 import shared.ChatService;
 import shared.MeetingService;
 import java.rmi.registry.LocateRegistry;
@@ -81,6 +82,9 @@ public class ClientMain extends Application {
         // BẮT BUỘC cho RMI callback
         System.setProperty("java.rmi.server.hostname", "127.0.0.1");
 
+//        String localIP = IPUtil.getLocalIP();
+//        System.out.println("Local IP: " + localIP);
+//        System.setProperty("java.rmi.server.hostname", localIP);
         launch(args);
     }
 }
