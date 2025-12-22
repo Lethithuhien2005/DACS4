@@ -8,17 +8,69 @@ public class LoginLogupHandler {
 
     // Trả về Document response
     public Document handle(Document request) {
+        System.out.println("📩 SERVER RECEIVED: " + request.toJson());
+
         String type = request.getString("type");
 
+//        if ("LOGIN".equals(type)) {
+//            return handleLogin(request);
+//        } else if ("LOGUP".equals(type)) {
+//            return handleLogup(request);
+//        } else {
+//            return new Document("type", "ERROR")
+//                    .append("message", "LoginLogupHandler cannot handle type: " + type);
+//        }
         if ("LOGIN".equals(type)) {
             return handleLogin(request);
-        } else if ("LOGUP".equals(type)) {
-            return handleLogup(request);
-        } else {
-            return new Document("type", "ERROR")
-                    .append("message", "LoginLogupHandler cannot handle type: " + type);
         }
+        else if ("LOGUP".equals(type)) {
+            return handleLogup(request);
+        }
+        else if ("GET_PROFILE".equals(type)) {
+            return handleGetProfile(request);
+        }
+        else {
+            return new Document("type", "ERROR")
+                    .append("message", "Cannot handle type: " + type);
+        }
+//        switch (type) {
+//            case "LOGIN":
+//                return handleLogin(request);
+//            case "LOGUP":
+//                return handleLogup(request);
+//            case "GET_PROFILE":            // ✅ THÊM
+//                return handleGetProfile(request);
+//            default:
+//                return new Document("type", "ERROR")
+//                        .append("message", "Unsupported type: " + type);
+//        }
     }
+    private Document handleGetProfile(Document request) {
+
+        String email = request.getString("email");
+        System.out.println("📌 GET_PROFILE email = " + email);
+
+
+        if (email == null || email.isEmpty() ) {
+            return new Document("type", "GET_PROFILE_FAIL")
+                    .append("message", "Email is required");
+        }
+
+        var user = userController.getUserProfile(email);
+        System.out.println("👤 USER = " + user);
+
+        if (user == null) {
+            return new Document("type", "GET_PROFILE_FAIL")
+                    .append("message", "User not found");
+        }
+
+        return new Document("type", "GET_PROFILE_OK")
+                .append("email", user.getEmail())
+                .append("fullName", user.getFullName())
+                .append("userIdHex", user.getUserId().toHexString())
+                .append("role", user.getRole());
+    }
+
 
     private Document handleLogin(Document request) {
         String email = request.getString("email");

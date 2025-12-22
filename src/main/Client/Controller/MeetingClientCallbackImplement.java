@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.scene.layout.StackPane;
 import main.Client.View.meeting.VideoTile;
 import main.util.Session;
+import shared.DTO.ChatMeeting;
 import shared.DTO.Meeting_participantDTO;
 import main.Client.View.Home;
 import main.Client.View.meeting.MeetingUI;
@@ -39,15 +40,70 @@ public class MeetingClientCallbackImplement extends UnicastRemoteObject implemen
     }
 
     @Override
-    public void onJoinMeetingSuccess(List<Meeting_participantDTO> participantList) throws RemoteException {
+    public void onJoinMeetingSuccess(String roomId, List<Meeting_participantDTO> participantList, List<ChatMeeting> chatHistory) throws RemoteException {
         Platform.runLater(() -> {
-            // Hien thi trang Meeting
+            // set roomId cho UI
+            meetingUI.setRoomId(roomId);
+            // load participant
+            meetingUI.getParticipantsList().setAll(participantList);
+
+            // 3️⃣ set current user
+            for (Meeting_participantDTO p : participantList) {
+                if (p.getUserId().equals(Session.getInstance().getUserIdHex())) {
+                    meetingUI.setCurrentUser(p);
+                    break;
+                }
+            }
+            // 4️⃣ init chat controller (sau khi có roomId)
+            MeetingChatController chatController =
+                    new MeetingChatController(
+                            roomId,
+                            Session.getInstance().getUserIdHex()
+                    );
+            meetingUI.setChatController(chatController);
+
+            chatController.setUiListener(new MeetingChatController.UiListener() {
+
+                @Override
+                public void onMessageReceived(ChatMeeting msg) {
+                    meetingUI.addMessage(
+                            msg.getSender(),
+                            msg.getContent()
+                    );
+                }
+
+                @Override
+                public void onSystemMessage(String text) {
+                    meetingUI.addSystemMessage(text);
+                }
+            });
+
+//            chatController.setUiListener(msg ->
+//                    meetingUI.addMessage(msg.getSender(), msg.getContent())
+//            );
+
+            try {
+                chatController.connect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            // 5️⃣ render chat history (CHỈ 1 LẦN)
+            meetingUI.clearMessages();
+            for (ChatMeeting msg : chatHistory) {
+                meetingUI.addMessage(
+                        msg.getSender(),
+                        msg.getContent()
+                );
+            }
+
+
+            // 6️⃣ render UI meeting : Hien thi trang Meeting
             StackPane contentPane = meetingUI.getContentPane();
             contentPane.getChildren().setAll(meetingUI);
             // clear UI cũ
             List<VideoTile> tiles = meetingUI.getTiles();
             tiles.clear();
-            meetingUI.getParticipantsList().clear();
+//            meetingUI.getParticipantsList().clear();
 
             for (Meeting_participantDTO p : participantList) {
 
@@ -72,6 +128,12 @@ public class MeetingClientCallbackImplement extends UnicastRemoteObject implemen
                 }
             }
 
+//            for (ChatMeeting msg : chatHistory) {
+//                meetingUI.addMessage(
+//                        msg.getSender(),
+//                        msg.getContent()
+//                );
+//            }
             // update layout video
             meetingUI.getVideoCallPane().updateLayout(tiles);
         });

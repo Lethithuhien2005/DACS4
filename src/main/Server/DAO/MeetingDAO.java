@@ -2,6 +2,7 @@ package main.Server.DAO;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
 import main.util.MongoDBConnection;
 import org.bson.Document;
@@ -143,6 +144,7 @@ public class MeetingDAO {
         );
     }
 
+    // Chat Room
     public void saveMessage(
             ObjectId conversationId,
             String senderId,
@@ -156,5 +158,21 @@ public class MeetingDAO {
 
         messages.insertOne(doc);
     }
+    public ObjectId getConversationIdByRoomId(ObjectId roomId) {
+        Document room = rooms.find(
+                new Document("_id", roomId)
+        ).first();
+
+        if (room == null) return null;
+
+        return room.getObjectId("conversation_id");
+    }
+    public List<Document> getMessagesByConversationId(ObjectId conversationId) {
+        return messages.find(
+                        Filters.eq("conversation_id", conversationId)
+                ).sort(Sorts.ascending("created_at"))
+                .into(new ArrayList<>());
+    }
+
 
 }

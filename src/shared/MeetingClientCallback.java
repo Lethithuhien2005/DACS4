@@ -1,5 +1,6 @@
 package shared;
 
+import shared.DTO.ChatMeeting;
 import shared.DTO.Meeting_participantDTO;
 
 import java.rmi.Remote;
@@ -11,7 +12,13 @@ public interface MeetingClientCallback extends Remote {
     void onCreateMeetingSuccess(String meetingCode, String passcode, String title, long timeCreate) throws RemoteException;
     void onCreateMeetingFail(String message) throws RemoteException;
 
-    void onJoinMeetingSuccess(List<Meeting_participantDTO> participantList) throws RemoteException;
+//    void onJoinMeetingSuccess(String roomId, List<Meeting_participantDTO> participantList) throws RemoteException;
+    void onJoinMeetingSuccess(
+            String roomId,
+            List<Meeting_participantDTO> participantList,
+            List<ChatMeeting> chatHistory
+    ) throws RemoteException;
+
     void onJoinMeetingFail(String reason) throws RemoteException;
 
     // update participants list

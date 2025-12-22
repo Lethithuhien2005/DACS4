@@ -34,6 +34,7 @@ public class MeetingUI extends StackPane {
     private VideoCallPane videoCallPane;
     private Meeting_participantDTO currentUser;
     private String lastSender = null; // sender cua tin nhan truoc do
+    private String roomId;
 
     private TextField messageInput;
     private Button sendBtn;
@@ -46,15 +47,21 @@ public class MeetingUI extends StackPane {
 //        initUI();          // tạo layout, chatVBox, inputField, sendBtn
 //        initMeetingChat(meetingId, currentUserName);
 //    }
+    private ObservableList<Meeting_participantDTO> participantsList;
+
 
     private StackPane contentPane;
 
     private String fakeRoomId;
     public MeetingUI(StackPane contentPane) {
         this.contentPane = contentPane;
+        participantsList = FXCollections.observableArrayList();
 
+//        fakeRoomId = "MEETING_TEST_001";
+//        meetingUI.setRoomId(roomId);
+//        chatController = new MeetingChatController(roomId, userId);
+//        chatController.connect();
 
-        fakeRoomId = "MEETING_TEST_001";
         initUI();
 
 //        initMeetingChat(
@@ -377,38 +384,38 @@ public class MeetingUI extends StackPane {
         // Đoạn này chỉ dùng test UI – sau này xóa
         // Đoạn này chỉ dùng test UI – sau này xóa
 
-        messageList.getChildren().add(
-                createMessageRow(
-                        "Robert",
-                        "Please turn on your camera guys",
-                        "12:02 pm",
-                        false,
-                        lastSender
-                )
-        );
-        lastSender = "Robert";
-
-        messageList.getChildren().add(
-                createMessageRow(
-                        "You",
-                        "Okey dokey! and please don't forget fill the attendance form",
-                        "12:04 pm",
-                        true,
-                        lastSender
-                )
-        );
-        lastSender = "You";
-
-        messageList.getChildren().add(
-                createMessageRow(
-                        "Natalie",
-                        "Okay!",
-                        "12:05 pm",
-                        false,
-                        lastSender
-                )
-        );
-        lastSender = "Natalie";
+//        messageList.getChildren().add(
+//                createMessageRow(
+//                        "Robert",
+//                        "Please turn on your camera guys",
+//                        "12:02 pm",
+//                        false,
+//                        lastSender
+//                )
+//        );
+//        lastSender = "Robert";
+//
+//        messageList.getChildren().add(
+//                createMessageRow(
+//                        "You",
+//                        "Okey dokey! and please don't forget fill the attendance form",
+//                        "12:04 pm",
+//                        true,
+//                        lastSender
+//                )
+//        );
+//        lastSender = "You";
+//
+//        messageList.getChildren().add(
+//                createMessageRow(
+//                        "Natalie",
+//                        "Okay!",
+//                        "12:05 pm",
+//                        false,
+//                        lastSender
+//                )
+//        );
+//        lastSender = "Natalie";
 
         ScrollPane messageScroll = new ScrollPane(messageList);
         messageScroll.setFitToWidth(true);
@@ -704,17 +711,32 @@ public class MeetingUI extends StackPane {
         return videoCallPane;
     }
 
-    private void addMessage(String sender, String content) {
+    public void clearMessages() {
+        messageList.getChildren().clear();
+        lastSender = null;
+    }
+    public void addMessage(String sender, String content) {
+        String displayName;
+        boolean isMine = sender.equals(Session.getInstance().getUserIdHex());
+
+        if (sender.equals(Session.getInstance().getUserIdHex())) {
+            displayName = "You";
+        } else {
+            // tìm participant theo userId
+            Meeting_participantDTO p = findParticipantByUserId(sender);
+            displayName = (p != null) ? p.getFullName() : sender;
+        }
+
+
         String time = java.time.LocalTime.now()
                 .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
 
 //        boolean isMine = sender.equals(currentUser.getFullname());
-        boolean isMine = sender.equals(Session.getInstance().getUserIdHex());
 //        String displayName = currentUser.getFullname();
 
 //        boolean isMine = sender.equals("You");
         HBox row = createMessageRow(
-                sender,
+                displayName,
                 content,
                 time,
                 isMine,
@@ -722,10 +744,25 @@ public class MeetingUI extends StackPane {
         );
 
         messageList.getChildren().add(row);
-        lastSender = sender;
+        lastSender = displayName;
+    }
+//    private MeetingChatController chatController;
+    public void setChatController(MeetingChatController chatController) {
+        this.chatController = chatController;
     }
 
-    private void addSystemMessage(String text) {
+    private Meeting_participantDTO findParticipantByUserId(String userId) {
+        for (Meeting_participantDTO p : participants) {
+            if (p.getUserId().equals(userId)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+
+
+    public void addSystemMessage(String text) {
         Label label = new Label(text);
         label.setStyle("-fx-font-size: 11px; -fx-text-fill: #999;");
         label.setAlignment(Pos.CENTER);
@@ -734,6 +771,14 @@ public class MeetingUI extends StackPane {
 
     public StackPane getContentPane() {
         return contentPane;
+    }
+
+    public String getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
     }
 
 }

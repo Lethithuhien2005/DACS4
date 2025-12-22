@@ -49,9 +49,17 @@ public class ChatServiceImplement extends UnicastRemoteObject implements ChatSer
 
         // 1️⃣ convert id
         //ObjectId conversationId = new ObjectId("507f1f77bcf86cd799439011"); // test
-        ObjectId conversationId = new ObjectId(); // auto-generate // tạm thời
+        //ObjectId conversationId = new ObjectId(); // auto-generate // tạm thời
 //        ObjectId senderId = new ObjectId(message.getSender());
 //        ObjectId senderId = new ObjectId();
+
+        ObjectId roomObjectId = new ObjectId(room_id);
+        ObjectId conversationId =
+                meetingDAO.getConversationIdByRoomId(roomObjectId);
+        if (conversationId == null) {
+            System.err.println("❌ Conversation not found for room " + room_id);
+            return;
+        }
 
         String senderId = message.getSender(); // userIdHex từ Session
 

@@ -4,12 +4,15 @@ public class Session {
     private static Session instance;
     private String email;
     private String userIdHex;
+    private String fullName; // ✅ thêm
+
 
     private Session() {}
 
-    public void setUser(String email, String userIdHex) {
+    public void setUser(String email, String userIdHex, String fullName) {
         this.email = email;
         this.userIdHex = userIdHex;
+        this.fullName = fullName;
     }
     public static Session getInstance() {
         if (instance == null) {
@@ -28,6 +31,7 @@ public class Session {
     public String getUserIdHex() {
         return userIdHex;
     }
+    public String getFullName() { return fullName; }
 
     public boolean isLoggedIn() {
         return email != null && userIdHex != null;

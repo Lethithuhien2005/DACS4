@@ -13,6 +13,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Popup;
 import main.Client.ClientMain;
 import main.Client.Controller.MeetingController;
+import main.util.Session;
 import shared.MeetingService;
 //import main.Client.DTO.Meeting;
 
@@ -395,10 +396,24 @@ public class Home extends StackPane {
         avatar.setClip(clip);
 
         VBox accountInfor = new VBox();
-        Label nameAccount = new Label("Le Thi Thu Hien");
+
+//        Label nameAccount = new Label("Le Thi Thu Hien");
+//        nameAccount.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
+//        Label emailAccount = new Label("hienltt.23it@vku.udn.vn");
+//        emailAccount.setFont(Font.font("Poppins", FontWeight.NORMAL, 15));
+
+        System.out.println("SESSION FULLNAME = " + Session.getInstance().getFullName());
+        System.out.println("SESSION EMAIL = " + Session.getInstance().getEmail());
+
+        Label nameAccount = new Label(
+                Session.getInstance().getFullName()
+        );
         nameAccount.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
-        Label emailAccount = new Label("hienltt.23it@vku.udn.vn");
+        Label emailAccount = new Label(
+                Session.getInstance().getEmail()
+        );
         emailAccount.setFont(Font.font("Poppins", FontWeight.NORMAL, 15));
+
         accountInfor.getChildren().addAll(nameAccount, emailAccount);
 
         ImageView more = new ImageView(new Image(getClass().getResource("/images/down.png").toExternalForm()));

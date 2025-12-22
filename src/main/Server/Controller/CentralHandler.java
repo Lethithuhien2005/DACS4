@@ -102,7 +102,7 @@ public class CentralHandler {
                     Document req = Document.parse(line);
                     String type = req.getString("type");
 
-                    if ("LOGIN".equals(type) || "LOGUP".equals(type)) {
+                    if ("LOGIN".equals(type) || "LOGUP".equals(type) || "GET_PROFILE".equals(type)) {
                         // LoginLogupHandler se xu ly
                         Document resp = loginLogupHandler.handle(req);
                         send(resp);
