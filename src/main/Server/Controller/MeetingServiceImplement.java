@@ -129,7 +129,6 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
             callbacks.add(callback);
         }
 
-
         // Lấy danh sách participant dựa trên roomId
         List<Document> participants = meetingDAO.getActiveParticipants(roomID);
         List<Meeting_participantDTO> participantList = new ArrayList<>();
@@ -147,7 +146,7 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
             );
             participantList.add(dto);
         }
-        callback.onJoinMeetingSuccess(participantList);
+        callback.onJoinMeetingSuccess(roomID.toHexString(), participantList);
 
         // Thong bao cho tat ca cac client trong phong
         notifyUpdatingParticipants(roomID.toHexString());
@@ -182,25 +181,21 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
     }
 
     @Override
-    public synchronized void leaveMeeting(String userId, String meetingCode, MeetingClientCallback callback) throws RemoteException {
-        Document room = meetingDAO.getRoomByMeetingCode(meetingCode);
-        if (room == null) {
-            return;
-        }
-        ObjectId roomId = room.getObjectId("_id");
+    public synchronized void leaveMeeting(String userId, String roomId, MeetingClientCallback callback) throws RemoteException {
+        ObjectId roomID = new ObjectId(roomId);
         ObjectId userID = new ObjectId(userId);
 
         // Set trang thai left cho client
-        meetingDAO.updateStatusParticipant(roomId, userID);
+        meetingDAO.updateStatusParticipant(roomID, userID);
 
         // Xoa callback cua client trong danh sach
-        List<MeetingClientCallback> callbacks = roomCallbacks.get(roomId.toHexString());
+        List<MeetingClientCallback> callbacks = roomCallbacks.get(roomID.toHexString());
         if (callbacks != null) {
             callbacks.remove(callback);
         }
 
         // Thong bao cho cac client cap nhat giao dien
-        notifyUpdatingParticipants(roomId.toHexString());
+        notifyUpdatingParticipants(roomID.toHexString());
     }
 
     // Load cac cuoc hop hom nay moi lan vao Home
@@ -223,6 +218,63 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
             meetingsToday.add(dto);
         }
         return meetingsToday;
+    }
+
+    @Override
+    public void setMic(String roomId, String currentUser, String targetUser) throws RemoteException {
+         ObjectId roomID = new ObjectId(roomId);
+         ObjectId currentUserID = new ObjectId(currentUser);
+         ObjectId targetUserID = new ObjectId(targetUser);
+
+         // Neu nguoi dung hien tai muon dieu khien mic ca nhan
+        if (currentUserID.equals(targetUserID)) {
+            meetingDAO.updateMicStatus(roomID, targetUserID);
+            // Cap nhat giao dien cho tat cac client trong phong hop
+            notifyUpdatingParticipants(roomId);
+        }
+
+        // Neu nguoi dung hien tai muon dieu khien mic nguoi khac => Check quyen
+        if (!meetingDAO.canControl(roomID, currentUserID)) {
+            return;
+        }
+        meetingDAO.updateMicStatus(roomID, targetUserID);
+        notifyUpdatingParticipants(roomId);
+
+
+    }
+
+    @Override
+    public void setCam(String roomId, String currentUser, String targetUser) throws RemoteException {
+            ObjectId roomID = new ObjectId(roomId);
+            ObjectId currentUserID = new ObjectId(currentUser);
+            ObjectId targetUserID = new ObjectId(targetUser);
+
+            // Neu nguoi dung muon dieu khien cam ca nhan
+        if (currentUserID.equals(targetUserID)) {
+            meetingDAO.updateCameraStatus(roomID, targetUserID);
+            notifyUpdatingParticipants(roomId); // cap nhat giao dien cho cac client
+        }
+
+        // Neu nguoi dung muon dieu khien camera cua nguoi khac
+        if (!meetingDAO.canControl(roomID, currentUserID)) {
+            return;
+        }
+        meetingDAO.updateCameraStatus(roomID, targetUserID);
+        notifyUpdatingParticipants(roomId);
+    }
+
+    @Override
+    public void kickUser(String roomId, String currentUser, String targetUser) throws RemoteException {
+        ObjectId roomID = new ObjectId(roomId);
+//        ObjectId currentUserID = new ObjectId(currentUser);
+        ObjectId targetUserID = new ObjectId(targetUser);
+
+//        // Check quyen
+//        if (!meetingDAO.canControl(roomID, currentUserID)) {
+//            return;
+//        }
+        meetingDAO.updateStatusParticipant(roomID, targetUserID);
+        notifyUpdatingParticipants(roomId);
     }
 
 }

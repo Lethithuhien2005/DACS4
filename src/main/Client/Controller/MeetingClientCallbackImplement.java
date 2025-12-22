@@ -2,6 +2,7 @@ package main.Client.Controller;
 
 import javafx.application.Platform;
 import javafx.scene.layout.StackPane;
+import main.Client.View.SidebarController;
 import main.Client.View.meeting.VideoTile;
 import main.util.Session;
 import shared.DTO.Meeting_participantDTO;
@@ -12,16 +13,20 @@ import shared.MeetingClientCallback;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MeetingClientCallbackImplement extends UnicastRemoteObject implements MeetingClientCallback {
     private Home homeView;
     private MeetingUI meetingUI;
+    private SidebarController sidebarController;
 
-    public MeetingClientCallbackImplement(Home homeView, MeetingUI meetingUI) throws RemoteException {
+    public MeetingClientCallbackImplement(Home homeView, MeetingUI meetingUI, SidebarController sidebarController) throws RemoteException {
         super();
         this.homeView = homeView;
         this.meetingUI = meetingUI;
+        this.sidebarController = sidebarController;
     }
 
     @Override
@@ -39,18 +44,22 @@ public class MeetingClientCallbackImplement extends UnicastRemoteObject implemen
     }
 
     @Override
-    public void onJoinMeetingSuccess(List<Meeting_participantDTO> participantList) throws RemoteException {
+    public void onJoinMeetingSuccess(String roomId, List<Meeting_participantDTO> participantList) throws RemoteException {
         Platform.runLater(() -> {
+            // Lay id phong de setMic, setCam, kickUser
+            meetingUI.setRoomId(roomId);
             // Hien thi trang Meeting
             StackPane contentPane = meetingUI.getContentPane();
             contentPane.getChildren().setAll(meetingUI);
+            // Sidebar hien thi item Meeting duoc chon
+            sidebarController.selectMeetingItem();
             // clear UI cũ
             List<VideoTile> tiles = meetingUI.getTiles();
             tiles.clear();
             meetingUI.getParticipantsList().clear();
 
             for (Meeting_participantDTO p : participantList) {
-
+                String userId = p.getUserId();
                 String username = p.getUsername();
                 String fullName = p.getFullName();
                 String avatar = p.getAvatar();
@@ -59,7 +68,7 @@ public class MeetingClientCallbackImplement extends UnicastRemoteObject implemen
                 boolean isCameraOn = p.isCameraOn();
 
                 // Video tile
-                VideoTile tile = new VideoTile(username);
+                VideoTile tile = new VideoTile(userId, username);
                 tile.setCameraOn(isCameraOn);
                 tile.setAvatar(avatar);
                 tiles.add(tile);
@@ -91,6 +100,13 @@ public class MeetingClientCallbackImplement extends UnicastRemoteObject implemen
             // Cap nhat danh sach nguoi tham gia
             meetingUI.getParticipantsList().setAll(updateList);
 
+            // Lưu trạng thái camera/mic hiện tại
+            Map<String, Boolean> cameraStateMap = new HashMap<>();
+            for (VideoTile tile : meetingUI.getTiles()) {
+                cameraStateMap.put(tile.getUserId(), tile.isCameraOn());
+            }
+
+
             // Cập nhật currentUser nếu có
             for (Meeting_participantDTO p : updateList) {
                 if (p.getUserId().equals(Session.getInstance().getUserIdHex())) {
@@ -103,16 +119,22 @@ public class MeetingClientCallbackImplement extends UnicastRemoteObject implemen
             List<VideoTile> tiles = meetingUI.getTiles();
             tiles.clear();
             for (Meeting_participantDTO p : updateList) {
-                VideoTile tile = new VideoTile(p.getUsername());
+                VideoTile tile = new VideoTile(p.getUserId(), p.getUsername());
                 tile.setCameraOn(p.isCameraOn());
                 tile.setAvatar(p.getAvatar());
+
+                // Nếu có trạng thái camera local, ưu tiên dùng
+                if (cameraStateMap.containsKey(p.getUserId())) {
+                    tile.setCameraOn(cameraStateMap.get(p.getUserId()));
+                } else {
+                    tile.setCameraOn(p.isCameraOn());
+                }
+
                 tiles.add(tile);
             }
 
             meetingUI.getVideoCallPane().updateLayout(tiles);
         });
-
     }
-
 
 }

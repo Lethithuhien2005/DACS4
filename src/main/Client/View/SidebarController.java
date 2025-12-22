@@ -11,14 +11,22 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import main.Client.Controller.MeetingController;
 import main.Client.View.meeting.MeetingUI;
+import shared.MeetingService;
 
 public class SidebarController {
+    private VBox meetingItem;
     private StackPane contentPane;
     private VBox sidebar;
     private VBox selectedItem = null;
+    private MeetingUI meetingUI;
+    private Home homeView;
+    private MeetingService meetingService;
+    private MeetingController meetingController;
 
-    public SidebarController() {
+    public SidebarController(MeetingService meetingService) {
+        this.meetingService = meetingService;
 
         sidebar = new VBox(12);
         sidebar.setPrefWidth(80);
@@ -27,12 +35,28 @@ public class SidebarController {
         contentPane = new StackPane();
         contentPane.setStyle("-fx-background-color: #f5f3f4");
 
+        homeView = new Home(contentPane);
+        meetingUI = new MeetingUI(contentPane);
+
+        meetingController = new MeetingController(
+                homeView,
+                meetingUI,
+                meetingService,
+                this
+        );
+
+        homeView.setMeetingController(meetingController);
+        meetingUI.setMeetingController(meetingController);
+
+        // Load danh sach cuoc hop hom nay
+        meetingController.loadMeetingsToday();
+
         VBox homeItem = createMenuItem("/images/home.png", "Home",
-                () -> setContent(new Home(contentPane)));
+                () -> setContent(homeView));
         VBox.setMargin(homeItem, new Insets(30,0,0,0));
 
-        VBox meetingItem = createMenuItem("/images/video.png", "Meet",
-                () -> setContent(new MeetingUI(contentPane)));
+        meetingItem = createMenuItem("/images/video.png", "Meet",
+                () -> setContent(meetingUI));
 
 
         VBox chattingItem = createMenuItem("/images/chat.png", "Chat",
@@ -59,7 +83,7 @@ public class SidebarController {
 
         // Chọn Home mặc định
         selectedItem = null;          // Không có item nào selected
-        setContent(new Home(contentPane));   // Load trang Home
+        setContent(homeView);   // Load trang Home
         applySelectedStyle(homeItem);
         selectedItem = homeItem;
     }
@@ -167,4 +191,13 @@ public class SidebarController {
 
     public VBox getSidebar() { return sidebar; }
     public StackPane getContentPane() { return contentPane; }
+
+    // Cap nhat item Meeting duoc chon khi join cuoc hop thanh cong
+    public void selectMeetingItem() {
+        if (selectedItem != null) {
+            resetItemStyle(selectedItem);
+        }
+        applySelectedStyle(meetingItem);
+        selectedItem = meetingItem;
+    }
 }

@@ -17,6 +17,8 @@ public class VideoCallPane extends GridPane {
     }
 
     public void updateLayout(List<VideoTile> tiles) {
+        if (tiles.isEmpty()) return;
+
         this.getChildren().clear();
         int n = tiles.size();
 

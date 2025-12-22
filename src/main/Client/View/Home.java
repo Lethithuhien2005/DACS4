@@ -35,17 +35,9 @@ public class Home extends StackPane {
     private Image noMeetingImage;
 
     private MeetingController meetingController;
-    private MeetingUI meetingUI;
 
     public Home(StackPane contentPane) {
         this.contentPane = contentPane;
-
-        // 1. Khởi tạo MeetingUI trước
-        this.meetingUI = new MeetingUI(contentPane);
-
-        // 2. Truyền ĐỦ dependency cho Controller
-        this.meetingController = new MeetingController(this, meetingUI, ClientMain.meetingService);
-        meetingController.loadMeetingsToday();
 
         HBox container = new HBox();
         VBox leftContainer = new VBox();
@@ -765,7 +757,6 @@ public class Home extends StackPane {
 //        return box;
 //    }
 
-
     public void clearMeetingsToday() {
         meetingTodayContainer.getChildren().clear();
     }
@@ -777,6 +768,11 @@ public class Home extends StackPane {
         meetingTodayContainer.setManaged(false);
     }
 
+    public StackPane getContentPane() {
+        return contentPane;
+    }
 
-
+    public void setMeetingController(MeetingController meetingController) {
+        this.meetingController = meetingController;
+    }
 }

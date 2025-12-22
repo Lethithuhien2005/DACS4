@@ -18,9 +18,13 @@ public class VideoTile extends StackPane {
     private ImageView avatarView;
     private boolean cameraOn;
     private Image fakeWebcamImage;
+    private String userId;
 
 
-    public VideoTile(String username) {
+    public VideoTile(String userId, String username) {
+        this.userId = userId;
+        accountName = new Label(username);
+
         videoView = new ImageView();
         videoView.setPreserveRatio(true);
         videoView.setSmooth(true);
@@ -78,4 +82,13 @@ public class VideoTile extends StackPane {
     public void setAvatar(String avatarName) {
         avatarView.setImage(ImageUtil.loadAvatarSafe(avatarName));
     }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public boolean isCameraOn() {
+        return cameraOn;
+    }
 }
+

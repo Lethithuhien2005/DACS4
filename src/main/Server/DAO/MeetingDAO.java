@@ -58,13 +58,6 @@ public class MeetingDAO {
         return rooms.find(new Document("conversation_id", conversationId)).first();
     }
 
-
-    // Kiem tra user da co trong bang member chua
-    public boolean isMember(ObjectId conversationId, ObjectId userId) {
-        Document query = new Document("conversation_id", conversationId).append("user_id", userId);
-        return meeting_participants.find(query).first() != null;
-    }
-
     // Them user vao bang meeting_participants
     public void addParticipant(ObjectId roomId, ObjectId userId, String role) {
         Document memberDoc = new Document("room_id", roomId)
@@ -73,8 +66,8 @@ public class MeetingDAO {
                 .append("joined_at", new Date())
                 .append("left_at", null)
                 .append("status", "joined")
-                .append("is_muted", false)
-                .append("is_camera_on", true);
+                .append("is_muted", true)
+                .append("is_camera_on", false);
         meeting_participants.insertOne(memberDoc);
     }
 
@@ -155,6 +148,61 @@ public class MeetingDAO {
                 .append("created_at", Date.from(Instant.now()));
 
         messages.insertOne(doc);
+    }
+
+    public boolean canControl(ObjectId roomId, ObjectId userCurrentId) {
+        Document participant = meeting_participants.find(
+                Filters.and(
+                        Filters.eq("room_id", roomId),
+                        Filters.eq("user_id", userCurrentId),
+                        Filters.eq("status", "joined"),
+                        Filters.in("role", "host", "admin")
+                )
+        ).first();
+
+        return participant != null;
+    }
+
+
+    public void updateMicStatus(ObjectId roomId, ObjectId targetUserId) {
+        // Tim nguoi tham gia trong cuoc hop
+        Document participant = meeting_participants.find(
+                Filters.and(
+                        Filters.eq("room_id", roomId),
+                        Filters.eq("user_id", targetUserId),
+                        Filters.eq("status", "joined") // Chi thao tac voi nguoi con trong cuoc hop
+                )
+        ).first();
+        if (participant == null) {
+            return;
+        }
+
+        // Lay trang thai mic hien tai cua targer
+        boolean isMuted = Boolean.TRUE.equals(participant.getBoolean("is_muted"));
+
+        // Update trang thai mic
+        meeting_participants.updateOne(Filters.eq("_id", participant.getObjectId("_id")), Updates.set("is_muted", !isMuted));
+    }
+
+    public void updateCameraStatus(ObjectId roomId, ObjectId targetUserId) {
+        // Tim nguoi tham gia torng cuoc hop
+        Document participant = meeting_participants.find(
+                Filters.and(
+                        Filters.eq("room_id", roomId),
+                        Filters.eq("user_id", targetUserId),
+                        Filters.eq("status", "joined")
+                )
+        ).first();
+
+        if (participant == null) {
+            return;
+        }
+
+        // Lay trang thai camera hien tai cua target user
+        Boolean isCameraOn = Boolean.TRUE.equals(participant.getBoolean("is_camera_on"));
+
+        // update trang thai camera
+        meeting_participants.updateOne(Filters.eq("_id", participant.getObjectId("_id")), Updates.set("is_camera_on", isCameraOn));
     }
 
 }

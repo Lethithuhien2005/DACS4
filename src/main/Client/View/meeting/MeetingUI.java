@@ -16,7 +16,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 //import main.Client.DTO.Participant;
+import main.Client.ClientMain;
 import main.Client.Controller.MeetingChatController;
+import main.Client.Controller.MeetingController;
 import main.util.ImageUtil;
 import main.util.Session;
 //import main.Client.Controller.MeetingService;
@@ -34,11 +36,12 @@ public class MeetingUI extends StackPane {
     private VideoCallPane videoCallPane;
     private Meeting_participantDTO currentUser;
     private String lastSender = null; // sender cua tin nhan truoc do
-
+    private String roomId;
     private TextField messageInput;
     private Button sendBtn;
     private VBox messageList; // 👈 đưa lên field
 
+    private MeetingController meetingController;
 
     private MeetingChatController chatController;
 //
@@ -52,7 +55,6 @@ public class MeetingUI extends StackPane {
     private String fakeRoomId;
     public MeetingUI(StackPane contentPane) {
         this.contentPane = contentPane;
-
 
         fakeRoomId = "MEETING_TEST_001";
         initUI();
@@ -107,7 +109,7 @@ public class MeetingUI extends StackPane {
         });
         try {
             chatController.connect();
-            System.out.println("✅ RMI meeting chat connected");
+            System.out.println("RMI meeting chat connected");
         } catch (Exception e) {
             e.printStackTrace();
             addSystemMessage("Cannot connect meeting chat");
@@ -135,14 +137,7 @@ public class MeetingUI extends StackPane {
         videoCallPane.prefHeightProperty().bind(videoContainer.heightProperty());
         videoCallPane.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-        // Test participants
-        tiles.add(new VideoTile("Alice"));
-        tiles.add(new VideoTile("Bob"));
-        tiles.add(new VideoTile("Charlie"));
-        tiles.add(new VideoTile("Charlie"));
-        tiles.add(new VideoTile("Charlie"));
-
-        videoCallPane.updateLayout(tiles);
+//        videoCallPane.updateLayout(tiles);
 
         // Cac nut dieu khien
         HBox controlBar = new HBox(20);
@@ -150,8 +145,8 @@ public class MeetingUI extends StackPane {
         controlBar.setAlignment(Pos.CENTER);
         controlBar.setStyle("-fx-background-color: #fff;");
 
-        VBox micBox = styleControlBox("/images/mic_off.png", "Microphone");
-        VBox cameraBox = styleControlBox("/images/camera_off.png", "Camera");
+        VBox micBox = createMicControl();
+        VBox cameraBox = createCameraControl();
         VBox raiseBox = styleControlBox("/images/raise_off.png", "Raise");
 
         VBox reactBox = new VBox(5);
@@ -179,12 +174,16 @@ public class MeetingUI extends StackPane {
         ImageView leaveImage = new ImageView(new Image(getClass().getResource("/images/leave.png").toExternalForm()));
         leaveImage.setFitHeight(28);
         leaveImage.setFitWidth(28);
+
         Button leaveBtn = new Button();
         leaveBtn.setGraphic(leaveImage);
         leaveBtn.setStyle("-fx-background-color: #ef233c; -fx-border-radius: 15; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 6, 0.2, 0, 1);");
         leaveBtn.setPrefSize(50, 50);
         leaveBtn.setMinSize(50, 50);
         leaveBtn.setMaxSize(50, 50);
+
+        leaveBtn.setOnAction(e -> meetingController.leaveMeeting());
+
         Label leaveLabel = new Label("Leave");
         leaveLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
         leaveLabel.setStyle("-fx-text-fill: #000");
@@ -215,7 +214,7 @@ public class MeetingUI extends StackPane {
         numberLabel.setStyle("-fx-text-fill: #9d4edd");
         HBox.setMargin(numberLabel, new Insets(0, 10, 0, 10));
 
-        Label numberOfParticipant = new Label("20");
+        Label numberOfParticipant = new Label();
         numberOfParticipant.setFont(Font.font("Poppins", FontWeight.BOLD, 16));
         numberOfParticipant.setStyle("-fx-text-fill: #9d4edd");
 
@@ -249,7 +248,7 @@ public class MeetingUI extends StackPane {
                 avatar.setFitHeight(40);
                 avatar.setClip(new Circle(20, 20, 20));
 
-                Label nameLabel = new Label(p.getFullName());
+                Label nameLabel = new Label(p.getUsername());
                 nameLabel.setFont(Font.font("Popppins", FontWeight.BOLD, 13));
                 Label roleLabel = new Label();
                 roleLabel.setFont(Font.font("Popppins", FontWeight.BOLD, 13));
@@ -275,7 +274,7 @@ public class MeetingUI extends StackPane {
                 Button micButton = new Button();
                 Button cameraButton = new Button();
 
-                updateMicIcon(micButton, p.isMuted());
+                updateMicIcon(micButton, !p.isMuted());
                 updateCameraIcon(cameraButton, p.isCameraOn());
 
                 boolean canControl = canControl(currentUser, p);
@@ -289,8 +288,7 @@ public class MeetingUI extends StackPane {
                         noPermissionTooltip.show(micButton, e.getSceneX(), e.getSceneY());
                     }
                     else {
-                        p.setMuted((!p.isMuted()));
-                        updateMicIcon(micButton, p.isMuted());
+                        meetingController.setMicUser(p.getUserId());
                     }
                 });
 
@@ -302,8 +300,7 @@ public class MeetingUI extends StackPane {
                         noPermissionTooltip.show(cameraButton, e.getSceneX(), e.getSceneY());
                     }
                     else {
-                        p.setCameraOn((!p.isCameraOn()));
-                        updateCameraIcon(cameraButton, p.isCameraOn());
+                      meetingController.setCameraUser(p.getUserId());
                     }
                 });
 
@@ -325,15 +322,16 @@ public class MeetingUI extends StackPane {
                 }
 
                 kickButton.setOnMouseClicked(e -> {
-                    // Kick thanh vien ra khoi cuoc hop
-
-
+                    meetingController.kickUser(p.getUserId());
                 });
 
                 row.getChildren().addAll(avatar, nameLabel, roleLabel, spacer, micButton, cameraButton, kickButton);
                 row.setAlignment(Pos.CENTER_LEFT);
                 listParticipants.getChildren().add(row);
             }
+
+            // cap nhat so luong nguoi tham gia
+            numberOfParticipant.setText(String.valueOf(participants.size()));
         });
 
         // Lay danh sach nguoi tham gia
@@ -374,7 +372,6 @@ public class MeetingUI extends StackPane {
         // Khu vuc hien thi tin nhan
         messageList.setStyle("-fx-background-color: #fff");
 
-        // Đoạn này chỉ dùng test UI – sau này xóa
         // Đoạn này chỉ dùng test UI – sau này xóa
 
         messageList.getChildren().add(
@@ -562,9 +559,130 @@ public class MeetingUI extends StackPane {
                 );
             }
         });
+        return box;
+    }
+
+    private VBox createMicControl() {
+        Image micOff = new Image(getClass().getResource("/images/mic_off.png").toExternalForm());
+        Image micOn  = new Image(getClass().getResource("/images/mic_on.png").toExternalForm());
+
+        ImageView micImage = new ImageView(micOff);
+        micImage.setFitWidth(28);
+        micImage.setFitHeight(28);
+
+        Button micBtn = new Button();
+        micBtn.setGraphic(micImage);
+        micBtn.setPrefSize(50, 50);
+        micBtn.setStyle("-fx-background-color: #F6EBFF; -fx-border-radius: 15; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 6, 0.2, 0, 1);");
+
+        Label micLabel = new Label("Microphone");
+        micLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
+
+        VBox box = new VBox(5, micBtn, micLabel);
+        box.setAlignment(Pos.CENTER);
+
+        final boolean[] isOn = {false};
+
+        micBtn.setOnAction(e -> {
+            isOn[0] = !isOn[0];
+            // UI
+            micImage.setImage(isOn[0] ? micOn : micOff);if (isOn[0]) {
+                // TURN ON
+                micImage.setImage(micOn);
+                micLabel.setStyle("-fx-text-fill: #6A00F4;");
+                micBtn.setStyle(
+                        "-fx-background-color: #E6D4FF; " +
+                                "-fx-border-radius: 15; -fx-background-radius: 15; " +
+                                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.20), 8, 0.3, 0, 1);"
+                );
+            } else {
+                // TURN OFF
+                micImage.setImage(micOff);
+                micLabel.setStyle("-fx-text-fill: #000;");
+                micBtn.setStyle(
+                        "-fx-background-color: #F6EBFF; " +
+                                "-fx-border-radius: 15; -fx-background-radius: 15; " +
+                                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 6, 0.2, 0, 1);"
+                );
+            }
+
+            if (meetingController != null) {
+                meetingController.setMicUser(
+                        Session.getInstance().getUserIdHex()
+                );
+            }
+        });
 
         return box;
     }
+
+    private VBox createCameraControl() {
+        Image camOff = new Image(getClass().getResource("/images/camera_off.png").toExternalForm());
+        Image camOn  = new Image(getClass().getResource("/images/camera_on.png").toExternalForm());
+
+        ImageView camImage = new ImageView(camOff);
+        camImage.setFitWidth(28);
+        camImage.setFitHeight(28);
+
+        Button camBtn = new Button();
+        camBtn.setGraphic(camImage);
+        camBtn.setPrefSize(50, 50);
+        camBtn.setStyle("-fx-background-color: #F6EBFF; -fx-border-radius: 15; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 6, 0.2, 0, 1);");
+
+        Label camLabel = new Label("Camera");
+        camLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
+
+        VBox box = new VBox(5, camBtn, camLabel);
+        box.setAlignment(Pos.CENTER);
+
+        final boolean[] isOn = {false};
+
+        camBtn.setOnAction(e -> {
+            isOn[0] = !isOn[0];
+
+            camImage.setImage(isOn[0] ? camOn : camOff);if (isOn[0]) {
+                // TURN ON
+                camImage.setImage(camOn);
+                camLabel.setStyle("-fx-text-fill: #6A00F4;");
+                camBtn.setStyle(
+                        "-fx-background-color: #E6D4FF; " +
+                                "-fx-border-radius: 15; -fx-background-radius: 15; " +
+                                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.20), 8, 0.3, 0, 1);"
+                );
+
+
+            } else {
+                // TURN OFF
+                camImage.setImage(camOff);
+                camLabel.setStyle("-fx-text-fill: #000;");
+                camBtn.setStyle(
+                        "-fx-background-color: #F6EBFF; " +
+                                "-fx-border-radius: 15; -fx-background-radius: 15; " +
+                                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 6, 0.2, 0, 1);"
+                );
+            }
+            if (meetingController != null) {
+                meetingController.setCameraUser(
+                        Session.getInstance().getUserIdHex()
+                );
+            }
+            // Bật/tắt camera trực tiếp trên VideoTile của user hiện tại
+            VideoTile myTile = null;
+            for (VideoTile tile : tiles) {
+                if (tile.getUserId().equals(Session.getInstance().getUserIdHex())) {
+                    myTile = tile;
+                    break;
+                }
+            }
+            if (myTile != null) {
+                myTile.setCameraOn(isOn[0]);
+                videoCallPane.updateLayout(tiles);
+            }
+        });
+
+        return box;
+    }
+
     public void setCurrentUser(Meeting_participantDTO user) {
         this.currentUser = user;
     }
@@ -734,6 +852,18 @@ public class MeetingUI extends StackPane {
 
     public StackPane getContentPane() {
         return contentPane;
+    }
+
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
+    }
+
+    public String getRoomId() {
+        return roomId;
+    }
+
+    public void setMeetingController(MeetingController controller) {
+        this.meetingController = controller;
     }
 
 }
