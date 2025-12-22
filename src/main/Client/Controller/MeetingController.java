@@ -122,6 +122,22 @@ public class MeetingController {
             }
         }).start();
     }
+    public void loadRecentMeetings() {
+        new Thread(() -> {
+            try {
+                String userId = Session.getInstance().getUserIdHex();
+                List<RoomDTO> meetings =
+                        meetingService.getRecentMeetings(userId);
+
+                Platform.runLater(() -> {
+                    homeView.showRecentMeetings(meetings);
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 
     public void joinMeetingToday() {
 

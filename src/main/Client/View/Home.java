@@ -14,6 +14,7 @@ import javafx.stage.Popup;
 import main.Client.ClientMain;
 import main.Client.Controller.MeetingController;
 import main.util.Session;
+import shared.DTO.RoomDTO;
 import shared.MeetingService;
 //import main.Client.DTO.Meeting;
 
@@ -37,6 +38,7 @@ public class Home extends StackPane {
 
     private MeetingController meetingController;
     private MeetingUI meetingUI;
+    private VBox recentMeetinContainer;
 
     public Home(StackPane contentPane) {
         this.contentPane = contentPane;
@@ -47,6 +49,8 @@ public class Home extends StackPane {
         // 2. Truyền ĐỦ dependency cho Controller
         this.meetingController = new MeetingController(this, meetingUI, ClientMain.meetingService);
         meetingController.loadMeetingsToday();
+
+        meetingController.loadRecentMeetings();
 
         HBox container = new HBox();
         VBox leftContainer = new VBox();
@@ -397,10 +401,6 @@ public class Home extends StackPane {
 
         VBox accountInfor = new VBox();
 
-//        Label nameAccount = new Label("Le Thi Thu Hien");
-//        nameAccount.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
-//        Label emailAccount = new Label("hienltt.23it@vku.udn.vn");
-//        emailAccount.setFont(Font.font("Poppins", FontWeight.NORMAL, 15));
 
         System.out.println("SESSION FULLNAME = " + Session.getInstance().getFullName());
         System.out.println("SESSION EMAIL = " + Session.getInstance().getEmail());
@@ -463,7 +463,7 @@ public class Home extends StackPane {
         });
 
         // Recent meetings
-        VBox recentMeetinContainer = new VBox(10);
+        recentMeetinContainer = new VBox(10);
 //        recentMeetinContainer.setStyle("-fx-background-color: #fff; -fx-background-radius: 10; -fx-border-radius:10");
 //        recentMeetinContainer.setPadding(new Insets(15, 0, 0, 10));
         recentMeetinContainer.setPadding(new Insets(15)); // khoảng cách bên trong
@@ -506,6 +506,9 @@ public class Home extends StackPane {
 
         VBox meetingListContainer = new VBox(15);
         meetingListContainer.setStyle("-fx-background-color: #fff");
+        recentMeetinContainer.setPrefHeight(650);
+        recentMeetinContainer.setMinHeight(650);
+
 //        if (recentMeetings.isEmpty()) {
 //            VBox noRecentMeetingBox = new VBox(12);
 //            Image noRecentMeetingImage = new Image(getClass().getResource("/images/empty_box.png").toExternalForm());
@@ -737,10 +740,109 @@ public class Home extends StackPane {
 
         return meetingBox;
     }
+    public void showRecentMeetings(List<RoomDTO> meetings) {
+        recentMeetinContainer.getChildren().clear();
+
+        if (meetings.isEmpty()) {
+            Label empty = new Label("No recent meetings");
+            empty.setStyle("-fx-text-fill: gray");
+            recentMeetinContainer.getChildren().add(empty);
+            return;
+        }
+
+        for (RoomDTO m : meetings) {
+            recentMeetinContainer.getChildren().add(
+                    createRecentMeetingItem(m)
+            );
+        }
+    }
+    private VBox createRecentMeetingItem(RoomDTO m) {
+
+        VBox box = new VBox(8);
+            box.setPadding(new Insets(15));
+            box.setStyle("""
+            -fx-background-radius: 10;
+            -fx-border-radius: 10;
+            -fx-border-color: #ccc;
+            -fx-border-width: 1;
+            -fx-background-color: #fff;
+        """);
+
+//        Label title = new Label(m.getTitle());
+//        title.setFont(Font.font("Poppins", FontWeight.BOLD, 14));
+        /* ===== TITLE ===== */
+        Label titleLabel = new Label(m.getTitle());
+        titleLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
+        titleLabel.setWrapText(true);
+        /* ===== TIME ===== */
+        HBox timeBox = new HBox(5);
+        ImageView icon = new ImageView(
+                new Image(getClass()
+                        .getResource("/images/calendar_2.png")
+                        .toExternalForm())
+        );
+        icon.setFitWidth(20);
+        icon.setFitHeight(20);
+
+        Date date = new Date(m.getTime());
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm");
+
+        Label time = new Label(sdf.format(date));
+        time.setFont(Font.font("Poppins", FontWeight.BOLD, 13));
+        time.setStyle("-fx-text-fill: gray");
+
+//        Button join = new Button("Join");
+//        join.setOnAction(e ->
+//                meetingController.onClickJoinTheMeeting(
+//                        m.getMeeting_code(),
+//                        m.getPasscode()
+//                )
+//        );
+
+//        box.getChildren().addAll(title, time, join);
+        timeBox.getChildren().addAll(icon, time);
+
+        /* ===== HOST (TẠM THỜI) ===== */
+        HBox hostBox = new HBox(10);
+
+        ImageView avatar = new ImageView(
+                new Image(getClass()
+                        .getResource("/images/avatar.jpg")
+                        .toExternalForm())
+        );
+        avatar.setFitWidth(24);
+        avatar.setFitHeight(24);
+        avatar.setClip(new Circle(12, 12, 12));
+
+        String currentUserId = Session.getInstance().getUserIdHex();
+        String hostName;
+
+        if (currentUserId.equals(m.getCreated_by())) {
+            hostName = Session.getInstance().getFullName(); // mình là host
+        } else {
+//            hostName = "Host"; // 👈 xem nâng cấp bên dưới
+            hostName = m.getHostFullName();
+        }
+        //  Vì RoomDTO chưa có hostName → tạm hiển thị "Host"
+        Label host = new Label(hostName);
+        host.setFont(Font.font("Poppins", FontWeight.BOLD, 15));
+        host.setStyle("-fx-text-fill: gray");
+
+        hostBox.getChildren().addAll(avatar, host);
+
+        /* ===== ADD ALL ===== */
+        box.getChildren().addAll(
+                titleLabel,
+                timeBox,
+                hostBox
+        );
+        return box;
+    }
+
 
 
     // Tao UI cho 1 item recent meeting
-//    private VBox createRecentMeetingItem(Meeting recentMeeting) {
+//    private VBox createRecentMeetingItem(RoomDTO recentMeeting) {
 //        VBox box = new VBox(8);
 //        box.setPadding(new Insets(15));
 //        box.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #ccc; -fx-border-width: 1; -fx-background-color: #fff;");

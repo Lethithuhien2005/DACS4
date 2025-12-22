@@ -1,6 +1,7 @@
 package main.Server.DAO;
 
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
@@ -9,6 +10,7 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -118,6 +120,27 @@ public class MeetingDAO {
         return rooms.find(query).into(new ArrayList<>());
 
     }
+    public List<Document> getMeetingsLast7Days(ObjectId userId) {
+
+        Instant now = Instant.now();
+        Instant sevenDaysAgo = now.minus(7, ChronoUnit.DAYS);
+
+        return meeting_participants.aggregate(List.of(
+                Aggregates.match(Filters.and(
+                        Filters.eq("user_id", userId),
+                        Filters.gte("joined_at", Date.from(sevenDaysAgo))
+                )),
+                Aggregates.lookup(
+                        "rooms",
+                        "room_id",
+                        "_id",
+                        "room"
+                ),
+                Aggregates.unwind("$room"),
+                Aggregates.sort(Sorts.descending("joined_at"))
+        )).into(new ArrayList<>());
+    }
+
 
     public void rejoin(ObjectId roomId, ObjectId userId) {
         meeting_participants.updateOne(

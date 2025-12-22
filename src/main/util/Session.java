@@ -4,7 +4,7 @@ public class Session {
     private static Session instance;
     private String email;
     private String userIdHex;
-    private String fullName; // ✅ thêm
+    private String fullName;
 
 
     private Session() {}

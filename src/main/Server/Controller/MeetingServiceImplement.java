@@ -248,5 +248,38 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
         }
         return meetingsToday;
     }
+    @Override
+    public List<RoomDTO> getRecentMeetings(String userIdHex) throws RemoteException {
+
+        ObjectId userId = new ObjectId(userIdHex);
+        List<Document> docs = meetingDAO.getMeetingsLast7Days(userId);
+
+        List<RoomDTO> result = new ArrayList<>();
+
+        for (Document d : docs) {
+            Document room = d.get("room", Document.class);
+
+            Document hostDoc =
+                    userDAO.getUserById(room.getObjectId("created_by"));
+
+            RoomDTO dto = new RoomDTO();
+            dto.setRoomId(room.getObjectId("_id").toHexString());
+            dto.setTitle(room.getString("title"));
+            dto.setMeeting_code(room.getString("meeting_code"));
+            dto.setPasscode(room.getString("passcode"));
+            dto.setCreated_at(room.getDate("created_at").getTime());
+            dto.setCreated_by(room.getObjectId("created_by").toHexString());
+
+            dto.setHostFullName(
+                    hostDoc != null
+                            ? hostDoc.getString("fullName")
+                            : "Unknown"
+            );
+
+            result.add(dto);
+        }
+        return result;
+    }
+
 
 }

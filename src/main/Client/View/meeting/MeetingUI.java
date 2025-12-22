@@ -2,11 +2,13 @@ package main.Client.View.meeting;
 //
 //import common.meeting.ChatMeeting;
 //import common.meeting.MeetingService;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -101,9 +103,9 @@ public class MeetingUI extends StackPane {
             @Override
             public void onMessageReceived(ChatMeeting msg) {
 //                addMessage(msg.getSender(), msg.getContent());
-                if (msg.getSender().equals(Session.getInstance().getUserIdHex())) {
-                    return; // tránh duplicate
-                }
+//                if (msg.getSender().equals(Session.getInstance().getUserIdHex())) {
+//                    return; // tránh duplicate
+//                }
                 addMessage(msg.getSender(), msg.getContent());
             }
 
@@ -420,15 +422,44 @@ public class MeetingUI extends StackPane {
         ScrollPane messageScroll = new ScrollPane(messageList);
         messageScroll.setFitToWidth(true);
         messageScroll.setPrefHeight(220);
+
         messageScroll.setStyle("-fx-background-color: #fff;");
 
         messageScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         messageScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
+
         // auto scroll xuong cuoi
         messageList.heightProperty().addListener(
                 (obs, oldVal, newVal) -> messageScroll.setVvalue(1.0)
         );
+        chatContainer.setStyle("-fx-background-color: white;");
+        rightContainer.setStyle("-fx-background-color: white;");
+
+        messageScroll.lookup(".viewport");
+        Platform.runLater(() -> {
+            Node viewport = messageScroll.lookup(".viewport");
+            if (viewport != null) {
+                viewport.setStyle(
+                        "-fx-background-color: white;" +
+                                "-fx-background-radius: 15;"
+                );
+            }
+        });
+
+        // bo góc cho ScrollPane
+        messageScroll.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background: white;" +
+                        "-fx-background-radius: 15;" +
+                        "-fx-border-radius: 15;"
+        );
+
+        messageList.setStyle("-fx-background-color: white;");
+//        messageList.setMinHeight(220);
+        messageList.prefWidthProperty().bind(messageScroll.widthProperty());
+
+
 
         // Gui tin nhan
         ImageView fileImageView = new ImageView(new Image(getClass().getResource("/images/meeting/file.png").toExternalForm()));
@@ -471,10 +502,10 @@ public class MeetingUI extends StackPane {
 
             // Optimistic UI
             //addMessage(userId, text);
-            addMessage(
-                    Session.getInstance().getUserIdHex(),
-                    text
-            );
+//            addMessage(
+//                    Session.getInstance().getUserIdHex(),
+//                    text
+//            );
 
             try {
                 chatController.sendMessage(text);

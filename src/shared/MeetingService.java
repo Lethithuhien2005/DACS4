@@ -21,4 +21,5 @@ public interface MeetingService extends Remote {
         public void leaveMeeting(String userId, String meetCode, MeetingClientCallback callback) throws RemoteException;
         public List<RoomDTO> getMeetingsToday(String userId) throws RemoteException;
 
+        public List<RoomDTO> getRecentMeetings(String userIdHex) throws RemoteException;
 }

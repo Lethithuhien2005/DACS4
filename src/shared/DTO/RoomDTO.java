@@ -11,6 +11,9 @@ public class RoomDTO implements Serializable {
     private String status;
     private String conservationId;
     private long created_at;
+    private String created_by;
+
+    private String hostFullName;
 
     public RoomDTO() {}
 
@@ -79,4 +82,20 @@ public class RoomDTO implements Serializable {
     public void setCreated_at(long created_at) {
         this.created_at = created_at;
     }
+
+    public long getTime() {
+        return created_at;
+    }
+
+    public String getCreated_by() {
+        return created_by;
+    }
+
+    public void setCreated_by(String created_by) {
+        this.created_by = created_by;
+    }
+
+    public String getHostFullName() { return hostFullName; }
+    public void setHostFullName(String hostFullName) { this.hostFullName = hostFullName; }
+
 }
