@@ -22,12 +22,14 @@ public class MeetingClientCallbackImplement extends UnicastRemoteObject implemen
     private Home homeView;
     private MeetingUI meetingUI;
     private SidebarController sidebarController;
+    private String userId; // lưu userId của client này
 
-    public MeetingClientCallbackImplement(Home homeView, MeetingUI meetingUI, SidebarController sidebarController) throws RemoteException {
+    public MeetingClientCallbackImplement(Home homeView, MeetingUI meetingUI, SidebarController sidebarController,  String userId) throws RemoteException {
         super();
         this.homeView = homeView;
         this.meetingUI = meetingUI;
         this.sidebarController = sidebarController;
+        this.userId = userId;
     }
 
     @Override
@@ -191,6 +193,22 @@ public class MeetingClientCallbackImplement extends UnicastRemoteObject implemen
             }
 
             meetingUI.getVideoCallPane().updateLayout(tiles);
+        });
+    }
+
+    @Override
+    public String getUserId() throws RemoteException {
+        return userId; // trả về userId
+    }
+
+    @Override
+    public void onKickedFromMeeting(String roomId, String reason) throws RemoteException {
+        Platform.runLater(() -> {
+            DialogUtil.showError("Kicked", null, reason);
+            // Hien thi trang home
+            Platform.runLater(()-> {
+                sidebarController.selectHomeItem();
+            });
         });
     }
 

@@ -22,4 +22,7 @@ public interface MeetingClientCallback extends Remote {
     // update participants list
     public void onParticipantListUpdated(List<Meeting_participantDTO> participants) throws RemoteException;
 
+    void onKickedFromMeeting(String roomId, String reason) throws RemoteException;
+    // Thêm để server biết callback này thuộc user nào
+    String getUserId() throws RemoteException;
 }

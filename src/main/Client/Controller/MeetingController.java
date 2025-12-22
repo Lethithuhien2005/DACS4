@@ -28,7 +28,7 @@ public class MeetingController {
         this.sidebarController = sidebarController;
 
         try {
-            this.callback = new MeetingClientCallbackImplement(homeView, meetingUI, sidebarController);
+            this.callback = new MeetingClientCallbackImplement(homeView, meetingUI, sidebarController, Session.getInstance().getUserIdHex());
         } catch (RemoteException e) {
             e.printStackTrace();
         }

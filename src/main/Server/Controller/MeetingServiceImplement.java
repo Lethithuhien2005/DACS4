@@ -330,6 +330,15 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
 //        }
         meetingDAO.updateStatusParticipant(roomID, targetUserID);
         notifyUpdatingParticipants(roomId);
+
+        // Thông báo riêng cho user bị kick
+        List<MeetingClientCallback> callbacks = roomCallbacks.get(roomId);
+        for (MeetingClientCallback c : callbacks) {
+            // Kiểm tra nếu callback của user bị kick
+            if (c.getUserId().equals(targetUser)) {
+                c.onKickedFromMeeting(roomId, "You have been kicked by the host");
+            }
+        }
     }
 
 }
