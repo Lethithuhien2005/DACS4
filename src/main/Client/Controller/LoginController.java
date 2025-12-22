@@ -38,6 +38,7 @@ public class LoginController {
 
                 // Gui login request
                 Document loginRequest = new org.bson.Document("type", "LOGIN").append("email", email).append("password", password);
+
                 socketClient.send(loginRequest);
 
                 // Cho server tra ket qua (Doc 1 dong)
@@ -47,8 +48,39 @@ public class LoginController {
 
                 // Neu login thanh cong
                 if ("LOGIN_OK".equals(type)) {
-                    String userIdHex = response.getString("userIdHex"); // Lay userIdHex tu server de luu session
-                    Session.getInstance().setUser(email, userIdHex);
+//                    String userIdHex = response.getString("userIdHex"); // Lay userIdHex tu server de luu session
+//                    Session.getInstance().setUser(email, userIdHex);
+
+                    String userIdHex = response.getString("userIdHex");
+
+                    // GỬI REQUEST GET_PROFILE
+                    Document profileRequest = new Document("type", "GET_PROFILE")
+                            .append("email", email);
+
+                    System.out.println("👉 SEND GET_PROFILE: " + profileRequest.toJson());
+
+                    socketClient.send(profileRequest);
+
+                    // NHẬN RESPONSE
+                    Document profileResponse =
+                            Document.parse(socketClient.getReader().readLine());
+
+                    if (!"GET_PROFILE_OK".equals(profileResponse.getString("type"))) {
+                        Platform.runLater(() ->
+                                logInView.showError("Cannot load user profile")
+                        );
+                        return;
+                    }
+
+
+                    // SET SESSION ĐẦY ĐỦ
+                    Session.getInstance().setUser(
+                            profileResponse.getString("email"),
+                            profileResponse.getString("userIdHex"),
+                            profileResponse.getString("fullName")
+                    );
+                    System.out.println("Login Controller - SESSION FULLNAME = " + Session.getInstance().getFullName());
+                    System.out.println("Login Controller - SESSION EMAIL = " + Session.getInstance().getEmail());
 
                     // Goi HELLO toi server chat
                     main.Client.Controller.ChatClient.getInstance().connectWithHello();

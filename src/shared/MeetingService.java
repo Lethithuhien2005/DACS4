@@ -22,4 +22,5 @@ public interface MeetingService extends Remote {
         public void setCam(String roomId, String currentUser, String targerUser) throws RemoteException;
         public void kickUser(String roomId, String currentUser, String targetUser) throws RemoteException;
 
+        public List<RoomDTO> getRecentMeetings(String userIdHex) throws RemoteException;
 }

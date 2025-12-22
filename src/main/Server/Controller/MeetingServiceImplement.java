@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 import shared.ChatService;
+import shared.DTO.ChatMeeting;
 import shared.DTO.Meeting_participantDTO;
 import shared.DTO.RoomDTO;
 import shared.MeetingClientCallback;
@@ -108,6 +109,8 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
 
         ObjectId roomID = room.getObjectId("_id");
         ObjectId userID = new ObjectId(userId);
+        // LẤY conversation_id TỪ ROOM
+        ObjectId conversationId = room.getObjectId("conversation_id");
 
         // Neu chua la member trong phong hop thi them vao
         String role = "member";
@@ -146,7 +149,26 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
             );
             participantList.add(dto);
         }
-        callback.onJoinMeetingSuccess(roomID.toHexString(), participantList);
+
+        // ===== LOAD CHAT HISTORY =====
+        List<Document> messageDocs =
+                meetingDAO.getMessagesByConversationId(conversationId);
+
+        List<ChatMeeting> chatHistory = new ArrayList<>();
+
+        for (Document d : messageDocs) {
+            chatHistory.add(new ChatMeeting(
+                    roomID.toHexString(),                 // roomId cho UI context
+                    d.getString("sender_id"),
+                    d.getString("content")
+            ));
+        }
+
+        callback.onJoinMeetingSuccess(
+                roomID.toHexString(),
+                participantList,
+                chatHistory
+        );
 
         // Thong bao cho tat ca cac client trong phong
         notifyUpdatingParticipants(roomID.toHexString());
@@ -219,6 +241,39 @@ public class MeetingServiceImplement extends UnicastRemoteObject implements Meet
         }
         return meetingsToday;
     }
+    @Override
+    public List<RoomDTO> getRecentMeetings(String userIdHex) throws RemoteException {
+
+        ObjectId userId = new ObjectId(userIdHex);
+        List<Document> docs = meetingDAO.getMeetingsLast7Days(userId);
+
+        List<RoomDTO> result = new ArrayList<>();
+
+        for (Document d : docs) {
+            Document room = d.get("room", Document.class);
+
+            Document hostDoc =
+                    userDAO.getUserById(room.getObjectId("created_by"));
+
+            RoomDTO dto = new RoomDTO();
+            dto.setRoomId(room.getObjectId("_id").toHexString());
+            dto.setTitle(room.getString("title"));
+            dto.setMeeting_code(room.getString("meeting_code"));
+            dto.setPasscode(room.getString("passcode"));
+            dto.setCreated_at(room.getDate("created_at").getTime());
+            dto.setCreated_by(room.getObjectId("created_by").toHexString());
+
+            dto.setHostFullName(
+                    hostDoc != null
+                            ? hostDoc.getString("fullName")
+                            : "Unknown"
+            );
+
+            result.add(dto);
+        }
+        return result;
+    }
+
 
     @Override
     public void setMic(String roomId, String currentUser, String targetUser) throws RemoteException {

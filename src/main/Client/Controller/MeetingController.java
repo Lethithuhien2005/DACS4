@@ -130,6 +130,22 @@ public class MeetingController {
             }
         }).start();
     }
+    public void loadRecentMeetings() {
+        new Thread(() -> {
+            try {
+                String userId = Session.getInstance().getUserIdHex();
+                List<RoomDTO> meetings =
+                        meetingService.getRecentMeetings(userId);
+
+                Platform.runLater(() -> {
+                    homeView.showRecentMeetings(meetings);
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 
     public void leaveMeeting() {
         String roomId = meetingUI.getRoomId();
@@ -153,9 +169,7 @@ public class MeetingController {
                 meetingService.leaveMeeting(userId, roomId, callback);
                 // Hien thi trang home
                 Platform.runLater(()-> {
-//                    meetingUI.clear();
-                    StackPane contentPane = homeView.getContentPane();
-                    contentPane.getChildren().setAll(homeView);
+                    sidebarController.selectHomeItem();
                 });
             }
             catch (Exception e) {

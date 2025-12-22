@@ -100,23 +100,5 @@ public class MeetingChatController {
                 }
             });
         }
-
-//        @Override
-//        public void onUserJoined(String name) {
-//            Platform.runLater(() -> {
-//                if (uiListener != null) {
-//                    uiListener.onSystemMessage(name + " joined the meeting");
-//                }
-//            });
-//        }
-//
-//        @Override
-//        public void onUserLeft(String name) {
-//            Platform.runLater(() -> {
-//                if (uiListener != null) {
-//                    uiListener.onSystemMessage(name + " left the meeting");
-//                }
-//            });
-//        }
     }
 }

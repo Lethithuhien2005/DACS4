@@ -56,7 +56,7 @@ public class UserDAO {
 //                doc.getString("role")
 //        );
         User user = new User(
-                doc.getString("accountName"),
+                doc.getString("username"),
                 doc.getString("fullName"),       // fullname
                 doc.getString("email"),
                 doc.getString("password"),

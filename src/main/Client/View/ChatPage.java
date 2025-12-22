@@ -37,13 +37,6 @@ public class ChatPage extends StackPane {
     private String pendingCreatedGroupName; // để biết group vừa tạo
     private List<User> otherUsers;
 
-//    public ChatPage(Stage stage, StackPane contentPane) {
-//        this.stage = stage;
-//        this.contentPane = contentPane;
-//    }
-
-
-
     private final ChatClient chatClient = ChatClient.getInstance();
     private String currentConversationId;
     private User selectedUser;
@@ -53,8 +46,6 @@ public class ChatPage extends StackPane {
     private final UserController userController = new UserController();
     // Lấy User từ DB
 //    User user = userController.getUserProfile(email);  // giả sử gọi DAO bên trong Controller
-
-
 
 
 
@@ -170,20 +161,6 @@ public class ChatPage extends StackPane {
             }
         });
         chatClient.listGroups();
-
-        // KHÔNG connect trực tiếp trên UI theard (đỡ đứng app)
-//        new Thread(() -> {
-//            try {
-//                SocketClient.getInstance().connect("localhost", 5555);
-//                System.out.println("TCP Connected!");
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//            }
-//        }).start();
-
-
-        // ============================================ LEFT PANEL =========================================
-//        HBox searchBar = createSearchBar();
         HBox searchBox = createSearchBar();
 
         Button btnCreateGroup = new Button("+");
@@ -209,21 +186,6 @@ public class ChatPage extends StackPane {
         peopleLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 20));
         peopleLabel.setPadding(new Insets(0, 0, 7, 10));
 
-
-//        ListView<HBox> peopleList = new ListView<>();
-//        peopleList.getItems().addAll(
-//                userGroupItem("./images/img.png","F4", "Just finished", "Are you okay?", "read"),
-//                userGroupItem("./images/logo.png","VKU04", "1 mins ago", "What are u doing?", "unread"),
-//                userGroupItem("./images/unread.png","LTMangHuhu", "15 mins ago", "I think it's a good chance", "read"),
-//                userGroupItem("./images/img.png","Quynh Anh Nguyen", "1 hr ago", "Are you okay?", "read"),
-//                userGroupItem("./images/img.png","Thu Hien", "1 hr ago", "Helloooo?", "read"),
-//                userGroupItem("./images/img.png","Minh Anh", "1 hr ago", "REp me pls", "read"),
-//                userGroupItem("./images/img.png","Cam Anh", "2 hrs ago", "I love you", "unread"),
-//                userGroupItem("./images/img.png","Nhat Uyen", "4 hrs ago", "I miss you", "unread"),
-//                userGroupItem("./images/img.png","Quynh Nhu", "15 hrs ago", "Heyyyy", "unread"),
-//                userGroupItem("./images/img.png","Anh Thu", "1 day ago", "OMG", "unread")
-//        );
-        // Lấy tất cả users trừ email hiện tại
         List<User> otherUsers = userController.getAllUsersExcept(email);
 
         ListView<HBox> peopleList = new ListView<>();
