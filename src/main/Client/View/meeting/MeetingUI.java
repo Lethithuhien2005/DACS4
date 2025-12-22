@@ -17,6 +17,7 @@ import javafx.scene.text.FontWeight;
 
 //import main.Client.DTO.Participant;
 import main.Client.Controller.MeetingChatController;
+import main.util.ImageUtil;
 import main.util.Session;
 //import main.Client.Controller.MeetingService;
 import shared.DTO.ChatMeeting;
@@ -243,7 +244,7 @@ public class MeetingUI extends StackPane {
                 HBox row = new HBox(10);
                 row.setPadding(new Insets(5));
 
-                ImageView avatar = new ImageView(new Image(p.getAvatar()));
+                ImageView avatar = new ImageView((ImageUtil.loadAvatarSafe(p.getAvatar())));
                 avatar.setFitWidth(40);
                 avatar.setFitHeight(40);
                 avatar.setClip(new Circle(20, 20, 20));
@@ -703,104 +704,6 @@ public class MeetingUI extends StackPane {
         return videoCallPane;
     }
 
-//    private void initMeetingChat(String meetingId, String currentUserName) {
-//
-//        chatController = new MeetingChatController(meetingId, currentUserName);
-//
-//        chatController.setUiListener(new MeetingChatController.UiListener() {
-//
-//            @Override
-//            public void onMessageReceived(MeetingService.ChatMessage msg) {
-//                addMessage(msg.getSender(), msg.getContent());
-//            }
-//
-//            @Override
-//            public void onSystemMessage(String text) {
-//                addSystemMessage(text);
-//            }
-//        });
-//
-//        try {
-//            chatController.connect(); // ⭐ CONNECT RMI TẠI ĐÂY
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            addSystemMessage("Cannot connect meeting chat");
-//        }
-//
-//        // SEND BUTTON
-//        sendBtn.setOnAction(e -> {
-//            try {
-//                chatController.sendMessage(messageInput.getText());
-//                messageInput.clear();
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//            }
-//        });
-//
-//        // ENTER = SEND
-//        messageInput.setOnAction(e -> sendBtn.fire());
-//
-//    }
-
-
-//    private void initMeetingChat(String meetingId, String currentUserName) {
-//
-//        chatController = new MeetingChatController(meetingId, currentUserName);
-//
-//        chatController.setUiListener(new MeetingChatController.UiListener() {
-//
-//            @Override
-//            public void onMessageReceived(ChatMeeting msg) {
-//                // msg là ChatMessage đúng kiểu
-//                addMessage(msg.getSender(), msg.getContent());
-//            }
-//
-//            @Override
-//            public void onSystemMessage(String text) {
-//                addSystemMessage(text);
-//            }
-//        });
-//
-//        try {
-//            chatController.connect(); // CONNECT RMI
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            addSystemMessage("Cannot connect meeting chat");
-//        }
-//
-//        // SEND BUTTON
-//        sendBtn.setOnAction(e -> {
-//            System.out.println("👉 [UI] Send button clicked");
-//            String text = messageInput.getText().trim();
-//            if (text.isEmpty()) {
-//                System.out.println("⚠️ [UI] Message is empty, not sending");
-//                return;
-//            }
-//
-//
-//            // ✅ HIỂN THỊ NGAY TRÊN UI
-//            addMessage(
-//                    Session.getInstance().getUserIdHex(),
-//                    text
-//            );
-//
-//            try {
-//                System.out.println("📤 [UI] Sending message: " + text);
-//
-//                chatController.sendMessage(messageInput.getText());
-//                messageInput.clear();
-//
-//                System.out.println("✅ [UI] Message sent, input cleared");
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//            }
-//        });
-//
-//        // ENTER = SEND
-//        messageInput.setOnAction(e -> sendBtn.fire());
-//    }
-
-
     private void addMessage(String sender, String content) {
         String time = java.time.LocalTime.now()
                 .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
@@ -827,6 +730,10 @@ public class MeetingUI extends StackPane {
         label.setStyle("-fx-font-size: 11px; -fx-text-fill: #999;");
         label.setAlignment(Pos.CENTER);
         messageList.getChildren().add(label);
+    }
+
+    public StackPane getContentPane() {
+        return contentPane;
     }
 
 }

@@ -10,6 +10,7 @@ import shared.MeetingClientCallback;
 import shared.MeetingService;
 
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 
 public class MeetingController {
@@ -18,11 +19,11 @@ public class MeetingController {
     private MeetingService meetingService;
     private MeetingClientCallback callback;
 
-
     public MeetingController(Home homeView, MeetingUI meetingUI, MeetingService meetingService) {
         this.homeView = homeView;
         this.meetingUI = meetingUI;
         this.meetingService = meetingService;
+
         try {
             this.callback = new MeetingClientCallbackImplement(homeView, meetingUI);
         } catch (RemoteException e) {
@@ -61,9 +62,7 @@ public class MeetingController {
     }
 
     // Khi nguoi dung click vao button Join the meeting now hoac Join now
-    public void onClickJoinTheMeeting() {
-        String meetingCode = homeView.idTextField.getText();
-        String passcode = homeView.passwordMeeting.getText();
+    public void onClickJoinTheMeeting(String meetingCode, String passcode) {
         String userID = Session.getInstance().getUserIdHex();
 
         if (meetingCode.isEmpty()) {
@@ -83,7 +82,7 @@ public class MeetingController {
 
         new Thread(() -> {
             try {
-                    meetingService.joinMeeting(userID, meetingCode, passcode, callback);
+                meetingService.joinMeeting(userID, meetingCode, passcode, callback);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                     Platform.runLater(() -> DialogUtil.showError("RMI Error", null, "Cannot connect to server!"));
@@ -122,6 +121,10 @@ public class MeetingController {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    public void joinMeetingToday() {
+
     }
 
 

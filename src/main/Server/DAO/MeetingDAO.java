@@ -107,7 +107,7 @@ public class MeetingDAO {
         cal.add(Calendar.DAY_OF_MONTH, 1);
         Date endOfDay = cal.getTime();
 
-        // Lấy danh sách room_id user đã tham gia
+        // Lấy danh sách room_id mà user đã tham gia
         List<ObjectId> roomIds = meeting_participants.find(new Document("user_id", userID)).map(doc -> doc.getObjectId("room_id"))
                 .into(new ArrayList<>());
 
@@ -134,7 +134,7 @@ public class MeetingDAO {
                 Filters.and(
                         Filters.eq("room_id", roomId),
                         Filters.eq("user_id", userId),
-                        Filters.eq("status", "active") // chỉ update nếu đang active
+                        Filters.eq("status", "joined") // chỉ update nếu đang trong phong hop
                 ),
                 Updates.combine(
                         Updates.set("status", "left"),
